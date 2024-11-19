@@ -6,7 +6,7 @@ mod console;
 mod lang_items;
 mod logging;
 
-use core::arch::{naked_asm};
+use core::arch::naked_asm;
 
 use log::info;
 
@@ -31,15 +31,6 @@ pub unsafe extern "C" fn start() -> ! {
     )
 }
 
-/// clear BSS segment
-pub fn clear_bss() {
-    extern "C" {
-        fn sbss();
-        fn ebss();
-    }
-    (sbss as usize..ebss as usize).for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
-}
-
 #[no_mangle]
 pub fn hmain() -> ! {
     clear_bss();
@@ -47,4 +38,13 @@ pub fn hmain() -> ! {
     info!("[Hypervisor] Hello, world!");
     sbi_rt::system_reset(sbi_rt::Shutdown, sbi_rt::NoReason);
     unreachable!()
+}
+
+/// clear BSS segment
+pub fn clear_bss() {
+    extern "C" {
+        fn sbss();
+        fn ebss();
+    }
+    (sbss as usize..ebss as usize).for_each(|a| unsafe { (a as *mut u8).write_volatile(0) });
 }
