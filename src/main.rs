@@ -1,12 +1,16 @@
 #![no_std]
 #![no_main]
 #![feature(naked_functions)]
+#![feature(alloc_error_handler)]
+
+extern crate alloc;
 
 mod console;
 mod lang_items;
 mod logging;
 mod mem;
 mod config;
+mod allocator;
 
 use core::arch::naked_asm;
 
@@ -44,6 +48,9 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     if sbi_rt::probe_extension(sbi_rt::Hsm).is_unavailable() {
         panic!("no HSM extension exist on current SBI environment");
     }
+
+    // init heap
+
 
     sbi_rt::system_reset(sbi_rt::Shutdown, sbi_rt::NoReason);
     unreachable!()
