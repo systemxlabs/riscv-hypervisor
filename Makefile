@@ -1,0 +1,20 @@
+HYPERVISOR_ELF := target/riscv64gc-unknown-none-elf/release/riscv-hypervisor
+HYPERVISOR_BIN := $(HYPERVISOR_ELF).bin
+BOOTLOADER := bootloader/rustsbi-qemu.bin
+HYPERVISOR_ENTRY_PA := 0x80200000
+
+# Binutils
+OBJDUMP := rust-objdump --arch-name=riscv64
+OBJCOPY := rust-objcopy --binary-architecture=riscv64
+
+elf:
+	cargo build --release
+
+$(HYPERVISOR_BIN): elf
+	@$(OBJCOPY) $(HYPERVISOR_ELF) --strip-all -O binary $@
+
+qemu: $(HYPERVISOR_BIN)
+	@qemu-system-riscv64 -machine virt \
+			 -nographic \
+			 -bios $(BOOTLOADER) \
+			 -device loader,file=$(HYPERVISOR_BIN),addr=$(HYPERVISOR_ENTRY_PA) \

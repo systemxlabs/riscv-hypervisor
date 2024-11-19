@@ -1,0 +1,11 @@
+[package]
+name = "riscv-hypervisor"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+sbi-rt = {version = "0.0.3", features = ["legacy"] }
+log = "0.4"
+
+[profile.release]
+debug = true
