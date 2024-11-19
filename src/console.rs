@@ -1,13 +1,18 @@
 use core::fmt::{self, Write};
-use sbi_rt::{console_write, console_write_byte, legacy::console_putchar, Physical};
 
 struct Stdout;
 
 impl Write for Stdout {
     fn write_str(&mut self, s: &str) -> fmt::Result {
-        // console_write(Physical::new(s.as_bytes().len(), s.as_ptr() as _, 0));
-        for c in s.chars() {
-            console_putchar(c as usize);
+        let bytes = s.as_bytes();
+        let range = bytes.as_ptr_range();
+        let ret = sbi_rt::console_write(sbi_rt::Physical::new(
+            bytes.len(),
+            range.start as usize,
+            range.end as usize,
+        ));
+        if ret.is_err() {
+            panic!("[Hypervisor] failed to write to console")
         }
         Ok(())
     }
@@ -17,7 +22,6 @@ pub fn print(args: fmt::Arguments) {
     Stdout.write_fmt(args).unwrap();
 }
 
-/// print string macro
 #[macro_export]
 macro_rules! print {
     ($fmt: literal $(, $($arg: tt)+)?) => {
@@ -25,7 +29,6 @@ macro_rules! print {
     }
 }
 
-/// println string macro
 #[macro_export]
 macro_rules! println {
     ($fmt: literal $(, $($arg: tt)+)?) => {

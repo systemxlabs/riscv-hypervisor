@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-sbi-rt = {version = "0.0.3", features = ["legacy"] }
+sbi-rt = "0.0.3"
 log = "0.4"
 
 [profile.release]

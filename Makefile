@@ -1,6 +1,6 @@
 HYPERVISOR_ELF := target/riscv64gc-unknown-none-elf/release/riscv-hypervisor
 HYPERVISOR_BIN := $(HYPERVISOR_ELF).bin
-BOOTLOADER := bootloader/rustsbi-qemu.bin
+BOOTLOADER := bootloader/rustsbi-qemu-2024-03-24.bin
 HYPERVISOR_ENTRY_PA := 0x80200000
 
 # Binutils
