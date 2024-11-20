@@ -1,7 +1,7 @@
 use bitmap_allocator::BitAlloc;
 
 use crate::{
-    config::{PAGE_SIZE_4K, PHYS_MEMORY_END, PHYS_MEMORY_SIZE},
+    config::{PAGE_SIZE_4K, PHYS_MEMORY_END},
     error::{HypervisorError, HypervisorResult},
     mem::addr::{align_down, align_up, PhysAddr},
 };

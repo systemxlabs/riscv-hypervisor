@@ -69,3 +69,53 @@ impl From<usize> for PhysAddr {
         Self(addr)
     }
 }
+
+/// A virtual memory address.
+///
+/// It's a wrapper type around an `usize`.
+#[repr(transparent)]
+#[derive(Copy, Clone, Default, Ord, PartialOrd, Eq, PartialEq)]
+pub struct VirtAddr(usize);
+
+impl fmt::Debug for VirtAddr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_fmt(format_args!("VA:{:#x}", self.0))
+    }
+}
+
+impl VirtAddr {
+    /// Converts the address to an `usize`.
+    #[inline]
+    pub const fn as_usize(self) -> usize {
+        self.0
+    }
+
+    /// Aligns the address upwards to the given alignment.
+    ///
+    /// See the [`align_up`] function for more information.
+    #[inline]
+    pub fn align_up<U>(self, align: U) -> Self
+    where
+        U: Into<usize>,
+    {
+        Self(align_up(self.0, align.into()))
+    }
+
+    /// Aligns the address downwards to the given alignment.
+    ///
+    /// See the [`align_down`] function for more information.
+    #[inline]
+    pub fn align_down<U>(self, align: U) -> Self
+    where
+        U: Into<usize>,
+    {
+        Self(align_down(self.0, align.into()))
+    }
+}
+
+impl From<usize> for VirtAddr {
+    #[inline]
+    fn from(addr: usize) -> Self {
+        Self(addr)
+    }
+}

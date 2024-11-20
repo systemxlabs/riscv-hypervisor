@@ -12,12 +12,10 @@ mod error;
 mod lang_items;
 mod logging;
 mod mem;
-mod page_table;
 
 use core::arch::naked_asm;
 
 use crate::config::BOOT_STACK_SIZE;
-use alloc::vec::Vec;
 use allocator::{frame::init_frame_allocator, heap::init_heap_allocator};
 use log::info;
 
