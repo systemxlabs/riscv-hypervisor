@@ -1,5 +1,5 @@
 pub const PHYS_MEMORY_BASE: usize = 0x8000_0000;
-pub const PHYS_MEMORY_SIZE: usize = 0x800_0000;  // 128 MB
+pub const PHYS_MEMORY_SIZE: usize = 0x800_0000; // 128 MB
 pub const PHYS_MEMORY_END: usize = PHYS_MEMORY_BASE + PHYS_MEMORY_SIZE;
 
 pub const PAGE_SIZE_4K: usize = 0x1000;

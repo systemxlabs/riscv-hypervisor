@@ -1,8 +1,8 @@
-use alloc::vec::Vec;
 use crate::config::{PAGE_SIZE_4K, PHYS_MEMORY_END};
 use crate::mem::addr::PhysAddr;
+use alloc::vec::Vec;
 
-mod addr;
+pub mod addr;
 
 bitflags::bitflags! {
     /// The flags of a physical memory region.
@@ -41,9 +41,9 @@ pub fn all_mem_regions() -> Vec<MemRegion> {
 
 pub fn free_mem_region() -> MemRegion {
     extern "C" {
-        fn ekernel();
+        fn ehypervisor();
     }
-    let start = PhysAddr::from(ekernel as usize).align_up(PAGE_SIZE_4K);
+    let start = PhysAddr::from(ehypervisor as usize).align_up(PAGE_SIZE_4K);
     let end = PhysAddr::from(PHYS_MEMORY_END).align_down(PAGE_SIZE_4K);
 
     MemRegion {

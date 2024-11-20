@@ -5,7 +5,7 @@ BASE_ADDRESS = 0x80200000;
 SECTIONS
 {
     . = BASE_ADDRESS;
-    skernel = .;
+    shypervisor = .;
 
     stext = .;
     .text : {
@@ -40,7 +40,7 @@ SECTIONS
 
     . = ALIGN(4K);
     ebss = .;
-    ekernel = .;
+    ehypervisor = .;
 
     /DISCARD/ : {
         *(.eh_frame)

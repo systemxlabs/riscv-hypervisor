@@ -45,8 +45,8 @@ impl PhysAddr {
     /// See the [`align_up`] function for more information.
     #[inline]
     pub fn align_up<U>(self, align: U) -> Self
-        where
-            U: Into<usize>,
+    where
+        U: Into<usize>,
     {
         Self(align_up(self.0, align.into()))
     }
@@ -56,8 +56,8 @@ impl PhysAddr {
     /// See the [`align_down`] function for more information.
     #[inline]
     pub fn align_down<U>(self, align: U) -> Self
-        where
-            U: Into<usize>,
+    where
+        U: Into<usize>,
     {
         Self(align_down(self.0, align.into()))
     }

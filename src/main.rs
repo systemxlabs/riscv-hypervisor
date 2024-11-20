@@ -5,20 +5,27 @@
 
 extern crate alloc;
 
+mod allocator;
+mod config;
 mod console;
+mod error;
 mod lang_items;
 mod logging;
 mod mem;
-mod config;
-mod allocator;
+mod page_table;
 
 use core::arch::naked_asm;
 
-use log::info;
 use crate::config::BOOT_STACK_SIZE;
+use alloc::vec::Vec;
+use allocator::{frame::init_frame_allocator, heap::init_heap_allocator};
+use log::info;
 
 #[link_section = ".bss.stack"]
 static BOOT_STACK: [u8; BOOT_STACK_SIZE] = [0u8; BOOT_STACK_SIZE];
+
+#[link_section = ".data.boot_page_table"]
+static mut BOOT_PT_SV39: [u64; 512] = [0; 512];
 
 #[link_section = ".text.entry"]
 #[export_name = "_start"]
@@ -49,8 +56,11 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
         panic!("no HSM extension exist on current SBI environment");
     }
 
-    // init heap
+    // init frame
+    init_frame_allocator();
 
+    // init heap
+    init_heap_allocator();
 
     sbi_rt::system_reset(sbi_rt::Shutdown, sbi_rt::NoReason);
     unreachable!()
