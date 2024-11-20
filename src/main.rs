@@ -16,14 +16,13 @@ mod mem;
 use core::arch::naked_asm;
 
 use crate::config::BOOT_STACK_SIZE;
+use crate::mem::page_table::init_page_table;
+use crate::mem::region::{map_free_memory, map_heap_memory, map_hypervisor_image};
 use allocator::{frame::init_frame_allocator, heap::init_heap_allocator};
 use log::info;
 
 #[link_section = ".bss.stack"]
 static BOOT_STACK: [u8; BOOT_STACK_SIZE] = [0u8; BOOT_STACK_SIZE];
-
-#[link_section = ".data.boot_page_table"]
-static mut BOOT_PT_SV39: [u64; 512] = [0; 512];
 
 #[link_section = ".text.entry"]
 #[export_name = "_start"]
@@ -56,6 +55,14 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
 
     // init frame
     init_frame_allocator();
+
+    // init page table
+    init_page_table();
+    map_hypervisor_image();
+    map_free_memory();
+    // map_heap_memory();
+
+    // TODO enable mmu
 
     // init heap
     init_heap_allocator();

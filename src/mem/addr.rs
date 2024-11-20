@@ -1,4 +1,5 @@
 use core::fmt;
+use core::ops::{Add, AddAssign, Sub, SubAssign};
 
 /// Align address upwards.
 ///
@@ -20,6 +21,22 @@ pub const fn align_down(addr: usize, align: usize) -> usize {
     addr & !(align - 1)
 }
 
+/// Returns the offset of the address within the alignment.
+///
+/// Equivalent to `addr % align`, but the alignment must be a power of two.
+#[inline]
+pub const fn align_offset(addr: usize, align: usize) -> usize {
+    addr & (align - 1)
+}
+
+/// Checks whether the address has the demanded alignment.
+///
+/// Equivalent to `addr % align == 0`, but the alignment must be a power of two.
+#[inline]
+pub const fn is_aligned(addr: usize, align: usize) -> bool {
+    align_offset(addr, align) == 0
+}
+
 /// A physical memory address.
 ///
 /// It's a wrapper type around an `usize`.
@@ -34,10 +51,25 @@ impl fmt::Debug for PhysAddr {
 }
 
 impl PhysAddr {
+    pub const fn new(addr: usize) -> Self {
+        Self(addr)
+    }
+
     /// Converts the address to an `usize`.
     #[inline]
     pub const fn as_usize(self) -> usize {
         self.0
+    }
+
+    /// Checks whether the address has the demanded alignment.
+    ///
+    /// See the [`is_aligned`] function for more information.
+    #[inline]
+    pub fn is_aligned<U>(self, align: U) -> bool
+    where
+        U: Into<usize>,
+    {
+        is_aligned(self.0, align.into())
     }
 
     /// Aligns the address upwards to the given alignment.
@@ -70,6 +102,36 @@ impl From<usize> for PhysAddr {
     }
 }
 
+impl Add<usize> for PhysAddr {
+    type Output = Self;
+    #[inline]
+    fn add(self, rhs: usize) -> Self {
+        Self(self.0 + rhs)
+    }
+}
+
+impl AddAssign<usize> for PhysAddr {
+    #[inline]
+    fn add_assign(&mut self, rhs: usize) {
+        *self = *self + rhs;
+    }
+}
+
+impl Sub<usize> for PhysAddr {
+    type Output = Self;
+    #[inline]
+    fn sub(self, rhs: usize) -> Self {
+        Self(self.0 - rhs)
+    }
+}
+
+impl SubAssign<usize> for PhysAddr {
+    #[inline]
+    fn sub_assign(&mut self, rhs: usize) {
+        *self = *self - rhs;
+    }
+}
+
 /// A virtual memory address.
 ///
 /// It's a wrapper type around an `usize`.
@@ -84,10 +146,25 @@ impl fmt::Debug for VirtAddr {
 }
 
 impl VirtAddr {
+    pub const fn new(addr: usize) -> Self {
+        Self(addr)
+    }
+
     /// Converts the address to an `usize`.
     #[inline]
     pub const fn as_usize(self) -> usize {
         self.0
+    }
+
+    /// Checks whether the address has the demanded alignment.
+    ///
+    /// See the [`is_aligned`] function for more information.
+    #[inline]
+    pub fn is_aligned<U>(self, align: U) -> bool
+    where
+        U: Into<usize>,
+    {
+        is_aligned(self.0, align.into())
     }
 
     /// Aligns the address upwards to the given alignment.
@@ -117,5 +194,35 @@ impl From<usize> for VirtAddr {
     #[inline]
     fn from(addr: usize) -> Self {
         Self(addr)
+    }
+}
+
+impl Add<usize> for VirtAddr {
+    type Output = Self;
+    #[inline]
+    fn add(self, rhs: usize) -> Self {
+        Self(self.0 + rhs)
+    }
+}
+
+impl AddAssign<usize> for VirtAddr {
+    #[inline]
+    fn add_assign(&mut self, rhs: usize) {
+        *self = *self + rhs;
+    }
+}
+
+impl Sub<usize> for VirtAddr {
+    type Output = Self;
+    #[inline]
+    fn sub(self, rhs: usize) -> Self {
+        Self(self.0 - rhs)
+    }
+}
+
+impl SubAssign<usize> for VirtAddr {
+    #[inline]
+    fn sub_assign(&mut self, rhs: usize) {
+        *self = *self - rhs;
     }
 }
