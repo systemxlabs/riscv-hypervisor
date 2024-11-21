@@ -1,10 +1,15 @@
-use page_table::HYPERVISOR_PAGE_TABLE;
-use riscv::register::satp;
-
 pub mod addr;
 pub mod page_table;
 pub mod pte;
 pub mod region;
+
+pub use addr::*;
+pub use page_table::*;
+pub use pte::*;
+pub use region::*;
+
+use page_table::HYPERVISOR_PAGE_TABLE;
+use riscv::register::satp;
 
 pub fn init_mmu() {
     let page_table_root = HYPERVISOR_PAGE_TABLE.lock().root_paddr().as_usize();

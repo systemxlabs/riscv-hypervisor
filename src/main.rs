@@ -8,20 +8,18 @@ extern crate alloc;
 mod allocator;
 mod config;
 mod console;
+mod csr;
 mod error;
 mod lang_items;
 mod logging;
 mod mem;
+mod percpu;
+mod vm;
 
 use core::arch::naked_asm;
 
 use crate::config::BOOT_STACK_SIZE;
-use crate::mem::page_table::init_page_table;
-use crate::mem::region::{map_free_memory, map_hypervisor_image};
-use alloc::vec::Vec;
-use allocator::{frame::init_frame_allocator, heap::init_heap_allocator};
 use log::info;
-use mem::init_mmu;
 
 #[link_section = ".bss.stack"]
 static BOOT_STACK: [u8; BOOT_STACK_SIZE] = [0u8; BOOT_STACK_SIZE];
@@ -56,24 +54,29 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     }
 
     // init frame
-    init_frame_allocator();
+    allocator::init_frame_allocator();
 
     // init heap
-    init_heap_allocator();
+    allocator::init_heap_allocator();
 
     // init page table
-    init_page_table();
-    map_hypervisor_image();
-    map_free_memory();
+    mem::init_page_table();
+    mem::map_hypervisor_image();
+    mem::map_free_memory();
 
     // enable mmu
-    init_mmu();
+    mem::init_mmu();
+    allocator::heap_test();
 
-    let mut v = Vec::new();
-    for i in 0..5000 {
-        v.push(i);
-    }
-    assert_eq!(v.len(), 5000);
+    percpu::init_percpus(hart_id);
+    let pcpu = percpu::this_cpu();
+    info!(
+        "[HyperVisor] hart_id: {}, stack_top: {:#x}",
+        pcpu.hart_id,
+        pcpu.stack_top.as_usize()
+    );
+
+    vm::vm_configs();
 
     sbi_rt::system_reset(sbi_rt::Shutdown, sbi_rt::NoReason);
     unreachable!()

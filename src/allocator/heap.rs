@@ -1,5 +1,6 @@
 use core::alloc::{GlobalAlloc, Layout};
 
+use alloc::vec::Vec;
 use buddy_system_allocator::{Heap, LockedHeap};
 use log::debug;
 
@@ -80,4 +81,14 @@ unsafe impl GlobalAlloc for BuddyHeapAllocator {
             .lock()
             .dealloc(unsafe { core::ptr::NonNull::new_unchecked(ptr) }, layout)
     }
+}
+
+pub fn heap_test() {
+    let mut v = Vec::new();
+    for i in 0..5000 {
+        v.push(i);
+    }
+    assert_eq!(v.len(), 5000);
+    assert_eq!(v[0], 0);
+    assert_eq!(v[4999], 4999);
 }
