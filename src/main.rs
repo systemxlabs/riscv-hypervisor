@@ -17,9 +17,11 @@ use core::arch::naked_asm;
 
 use crate::config::BOOT_STACK_SIZE;
 use crate::mem::page_table::init_page_table;
-use crate::mem::region::{map_free_memory, map_heap_memory, map_hypervisor_image};
+use crate::mem::region::{map_free_memory, map_hypervisor_image};
+use alloc::vec::Vec;
 use allocator::{frame::init_frame_allocator, heap::init_heap_allocator};
 use log::info;
+use mem::init_mmu;
 
 #[link_section = ".bss.stack"]
 static BOOT_STACK: [u8; BOOT_STACK_SIZE] = [0u8; BOOT_STACK_SIZE];
@@ -56,16 +58,22 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     // init frame
     init_frame_allocator();
 
+    // init heap
+    init_heap_allocator();
+
     // init page table
     init_page_table();
     map_hypervisor_image();
     map_free_memory();
-    // map_heap_memory();
 
-    // TODO enable mmu
+    // enable mmu
+    init_mmu();
 
-    // init heap
-    init_heap_allocator();
+    let mut v = Vec::new();
+    for i in 0..5000 {
+        v.push(i);
+    }
+    assert_eq!(v.len(), 5000);
 
     sbi_rt::system_reset(sbi_rt::Shutdown, sbi_rt::NoReason);
     unreachable!()

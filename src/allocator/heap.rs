@@ -44,16 +44,19 @@ impl BuddyHeapAllocator {
 
 unsafe impl GlobalAlloc for BuddyHeapAllocator {
     unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
-        let mut inner = self.inner.lock();
         loop {
+            let mut inner = self.inner.lock();
             if let Ok(ptr) = inner.alloc(layout) {
                 return ptr.as_ptr();
             } else {
+                debug!("starting to expand heap memory");
                 let old_size = inner.stats_total_bytes();
                 let expand_size = old_size
                     .max(layout.size())
                     .next_power_of_two()
                     .max(PAGE_SIZE_4K);
+                // avoid dead lock
+                drop(inner);
                 if let Ok(heap_ptr) = PHYS_FRAME_ALLOCATOR
                     .lock()
                     .alloc_frames(expand_size / PAGE_SIZE_4K)
