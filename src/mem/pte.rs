@@ -1,4 +1,4 @@
-use crate::mem::addr::PhysAddr;
+use crate::mem::addr::HostPhysAddr;
 
 bitflags::bitflags! {
     /// Page-table entry flags.
@@ -29,14 +29,14 @@ pub struct PageTableEntry(u64);
 impl PageTableEntry {
     const PHYS_ADDR_MASK: u64 = (1 << 54) - (1 << 10); // bits 10..54
 
-    pub fn new(paddr: PhysAddr, flags: PTEFlags) -> Self {
+    pub fn new(paddr: HostPhysAddr, flags: PTEFlags) -> Self {
         Self(flags.bits() as u64 | ((paddr.as_usize() >> 2) as u64 & Self::PHYS_ADDR_MASK))
     }
     pub fn empty() -> Self {
         PageTableEntry(0)
     }
-    pub fn paddr(&self) -> PhysAddr {
-        PhysAddr::from(((self.0 & Self::PHYS_ADDR_MASK) << 2) as usize)
+    pub fn paddr(&self) -> HostPhysAddr {
+        HostPhysAddr::from(((self.0 & Self::PHYS_ADDR_MASK) << 2) as usize)
     }
     pub fn flags(&self) -> PTEFlags {
         PTEFlags::from_bits_truncate(self.0 as usize)

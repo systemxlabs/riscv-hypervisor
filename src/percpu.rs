@@ -5,15 +5,15 @@ use crate::{
     allocator::PHYS_FRAME_ALLOCATOR,
     config::{PAGE_SIZE_4K, PERCPU_STACK_SIZE},
     error::HypervisorResult,
-    mem::{PhysAddr, VirtAddr},
+    mem::{HostPhysAddr, HostVirtAddr},
 };
 
 pub struct Percpu {
     pub hart_id: usize,
-    pub stack_top: PhysAddr,
+    pub stack_top: HostPhysAddr,
 }
 
-static PERCPU_BASE: Once<PhysAddr> = Once::new();
+static PERCPU_BASE: Once<HostPhysAddr> = Once::new();
 
 pub fn init_percpus(boot_hart_id: usize) {
     assert_eq!(boot_hart_id, 0);

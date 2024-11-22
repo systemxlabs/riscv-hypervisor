@@ -113,31 +113,25 @@ macro_rules! impl_common_addr_methods {
     };
 }
 
-impl_common_addr_methods!(PhysAddr);
-impl_common_addr_methods!(VirtAddr);
+impl_common_addr_methods!(HostPhysAddr);
+impl_common_addr_methods!(HostVirtAddr);
 
-/// A physical memory address.
-///
-/// It's a wrapper type around an `usize`.
 #[repr(transparent)]
 #[derive(Copy, Clone, Default, Ord, PartialOrd, Eq, PartialEq)]
-pub struct PhysAddr(usize);
+pub struct HostPhysAddr(usize);
 
-impl fmt::Debug for PhysAddr {
+impl fmt::Debug for HostPhysAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_fmt(format_args!("PA:{:#x}", self.0))
+        f.write_fmt(format_args!("HPA:{:#x}", self.0))
     }
 }
 
-/// A virtual memory address.
-///
-/// It's a wrapper type around an `usize`.
 #[repr(transparent)]
 #[derive(Copy, Clone, Default, Ord, PartialOrd, Eq, PartialEq)]
-pub struct VirtAddr(usize);
+pub struct HostVirtAddr(usize);
 
-impl fmt::Debug for VirtAddr {
+impl fmt::Debug for HostVirtAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_fmt(format_args!("VA:{:#x}", self.0))
+        f.write_fmt(format_args!("HVA:{:#x}", self.0))
     }
 }

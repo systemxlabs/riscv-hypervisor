@@ -3,7 +3,7 @@ use bitmap_allocator::BitAlloc;
 use crate::{
     config::{PAGE_SIZE_4K, PHYS_MEMORY_END},
     error::{HypervisorError, HypervisorResult},
-    mem::addr::{align_down, align_up, PhysAddr},
+    mem::addr::{align_down, align_up, HostPhysAddr},
 };
 use spin::Mutex;
 
@@ -35,7 +35,7 @@ impl PhysFrameAllocator {
         }
     }
 
-    pub fn init(&mut self, start: PhysAddr, size: usize) {
+    pub fn init(&mut self, start: HostPhysAddr, size: usize) {
         let start = align_up(start.as_usize(), PAGE_SIZE_4K);
         let end = align_down(start + size, PAGE_SIZE_4K);
         self.base = start;
@@ -43,7 +43,7 @@ impl PhysFrameAllocator {
         self.inner.insert(0..self.total_frames);
     }
 
-    pub fn alloc_frames(&mut self, num_frames: usize) -> HypervisorResult<PhysAddr> {
+    pub fn alloc_frames(&mut self, num_frames: usize) -> HypervisorResult<HostPhysAddr> {
         match num_frames.cmp(&1) {
             core::cmp::Ordering::Equal => self
                 .inner
@@ -59,7 +59,7 @@ impl PhysFrameAllocator {
         .inspect(|_| self.used_frames += num_frames)
     }
 
-    pub fn dealloc_frames(&mut self, pos: PhysAddr, num_frames: usize) {
+    pub fn dealloc_frames(&mut self, pos: HostPhysAddr, num_frames: usize) {
         // TODO: not decrease `used_frames` if deallocation failed
         self.used_frames -= num_frames;
         self.inner
