@@ -57,7 +57,7 @@ impl PageTable {
     ) -> HypervisorResult<()> {
         assert!(vaddr.is_aligned(PAGE_SIZE_4K));
         assert!(paddr.is_aligned(PAGE_SIZE_4K));
-        let pte = self.get_entry_mut_or_create(vaddr)?;
+        let pte = self.get_entry_mut(vaddr, true)?;
         if pte.is_unused() {
             *pte = PageTableEntry::new(paddr, flags);
             Ok(())
@@ -81,15 +81,9 @@ impl PageTable {
         Ok(())
     }
 
-    pub fn query(&self, vaddr: HostVirtAddr) -> HypervisorResult<(HostPhysAddr, PTEFlags)> {
-        let pte = self.get_entry_mut(vaddr)?;
+    pub fn query(&mut self, vaddr: HostVirtAddr) -> HypervisorResult<(HostPhysAddr, PTEFlags)> {
+        let pte = self.get_entry_mut(vaddr, false)?;
         Ok((pte.paddr(), pte.flags()))
-    }
-
-    fn table_of<'a>(&self, paddr: HostPhysAddr) -> &'a [PageTableEntry] {
-        let ptr = paddr.as_usize() as _;
-        // as we did identical mapping, so vaddr = paddr
-        unsafe { core::slice::from_raw_parts(ptr, SV39_TABLE_PTE_COUNT) }
     }
 
     fn table_of_mut<'a>(&self, paddr: HostPhysAddr) -> &'a mut [PageTableEntry] {
@@ -99,9 +93,15 @@ impl PageTable {
     }
 
     fn next_table_mut<'a>(
-        &self,
-        entry: &PageTableEntry,
+        &mut self,
+        entry: &mut PageTableEntry,
+        create_if_absent: bool,
     ) -> HypervisorResult<&'a mut [PageTableEntry]> {
+        if entry.is_unused() && create_if_absent {
+            let paddr = PHYS_FRAME_ALLOCATOR.lock().alloc_frames(1)?;
+            self.intrm_tables.push(paddr);
+            *entry = PageTableEntry::new(paddr, PTEFlags::V);
+        }
         if entry.is_valid() {
             Ok(self.table_of_mut(entry.paddr()))
         } else {
@@ -109,49 +109,20 @@ impl PageTable {
         }
     }
 
-    fn next_table_mut_or_create<'a>(
-        &mut self,
-        entry: &mut PageTableEntry,
-    ) -> HypervisorResult<&'a mut [PageTableEntry]> {
-        if entry.is_unused() {
-            let paddr = PHYS_FRAME_ALLOCATOR.lock().alloc_frames(1)?;
-            self.intrm_tables.push(paddr);
-            *entry = PageTableEntry::new(paddr, PTEFlags::V);
-            Ok(self.table_of_mut(paddr))
-        } else {
-            self.next_table_mut(entry)
-        }
-    }
-
-    fn get_entry_mut_or_create(
+    fn get_entry_mut(
         &mut self,
         vaddr: HostVirtAddr,
+        create_if_absent: bool,
     ) -> HypervisorResult<&mut PageTableEntry> {
         let table1 = self.table_of_mut(self.root_paddr);
         let table1_pte_index = (vaddr.as_usize() >> (12 + 18)) & (SV39_TABLE_PTE_COUNT - 1);
         let table1_pte = &mut table1[table1_pte_index];
 
-        let table2 = self.next_table_mut_or_create(table1_pte)?;
+        let table2 = self.next_table_mut(table1_pte, create_if_absent)?;
         let table2_pte_index = (vaddr.as_usize() >> (12 + 9)) & (SV39_TABLE_PTE_COUNT - 1);
         let table2_pte = &mut table2[table2_pte_index];
 
-        let table3 = self.next_table_mut_or_create(table2_pte)?;
-        let table3_pte_index = (vaddr.as_usize() >> 12) & (SV39_TABLE_PTE_COUNT - 1);
-        let table3_pte = &mut table3[table3_pte_index];
-
-        Ok(table3_pte)
-    }
-
-    fn get_entry_mut(&self, vaddr: HostVirtAddr) -> HypervisorResult<&mut PageTableEntry> {
-        let table1 = self.table_of_mut(self.root_paddr);
-        let table1_pte_index = (vaddr.as_usize() >> (12 + 18)) & (SV39_TABLE_PTE_COUNT - 1);
-        let table1_pte = &mut table1[table1_pte_index];
-
-        let table2 = self.next_table_mut(table1_pte)?;
-        let table2_pte_index = (vaddr.as_usize() >> (12 + 9)) & (SV39_TABLE_PTE_COUNT - 1);
-        let table2_pte = &mut table2[table2_pte_index];
-
-        let table3 = self.next_table_mut(table2_pte)?;
+        let table3 = self.next_table_mut(table2_pte, create_if_absent)?;
         let table3_pte_index = (vaddr.as_usize() >> 12) & (SV39_TABLE_PTE_COUNT - 1);
         let table3_pte = &mut table3[table3_pte_index];
 
