@@ -32,12 +32,9 @@ impl Log for SimpleLogger {
 pub fn init() {
     static LOGGER: SimpleLogger = SimpleLogger;
     log::set_logger(&LOGGER).unwrap();
-    log::set_max_level(match option_env!("LOG") {
-        Some("ERROR") => LevelFilter::Error,
-        Some("WARN") => LevelFilter::Warn,
-        Some("INFO") => LevelFilter::Info,
-        Some("DEBUG") => LevelFilter::Debug,
-        Some("TRACE") => LevelFilter::Trace,
-        _ => LevelFilter::Debug,
-    });
+    if let Some(filter) = option_env!("LOG") {
+        log::set_max_level(filter.parse().unwrap_or(LevelFilter::Info));
+    } else {
+        log::set_max_level(LevelFilter::Info);
+    }
 }

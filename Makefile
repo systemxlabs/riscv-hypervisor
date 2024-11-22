@@ -3,12 +3,14 @@ HYPERVISOR_BIN := $(HYPERVISOR_ELF).bin
 BOOTLOADER := bootloader/rustsbi-qemu-2024-03-24.bin
 HYPERVISOR_ENTRY_PA := 0x80200000
 
+LOG ?= INFO
+
 # Binutils
 OBJDUMP := rust-objdump --arch-name=riscv64
 OBJCOPY := rust-objcopy --binary-architecture=riscv64
 
 elf:
-	cargo build --release
+	LOG=$(LOG) cargo build --release
 
 $(HYPERVISOR_BIN): elf
 	@$(OBJCOPY) $(HYPERVISOR_ELF) --strip-all -O binary $@

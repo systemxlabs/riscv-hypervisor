@@ -2,7 +2,7 @@ use crate::config::{PAGE_SIZE_4K, PHYS_MEMORY_END};
 use crate::mem::addr::{align_down, align_up};
 use crate::mem::page_table::HYPERVISOR_PAGE_TABLE;
 use crate::mem::pte::PTEFlags;
-use log::info;
+use log::{debug, info};
 
 pub fn map_hypervisor_image() {
     extern "C" {
