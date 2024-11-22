@@ -34,7 +34,10 @@ pub fn map_hypervisor_image() {
         )
         .expect("should work fine");
     assert_eq!(
-        HYPERVISOR_PAGE_TABLE.lock().query(stext.into()).unwrap(),
+        HYPERVISOR_PAGE_TABLE
+            .lock()
+            .query_page(stext.into())
+            .unwrap(),
         (stext.into(), pte_flags)
     );
 
@@ -57,7 +60,10 @@ pub fn map_hypervisor_image() {
         )
         .expect("should work fine");
     assert_eq!(
-        HYPERVISOR_PAGE_TABLE.lock().query(srodata.into()).unwrap(),
+        HYPERVISOR_PAGE_TABLE
+            .lock()
+            .query_page(srodata.into())
+            .unwrap(),
         (srodata.into(), pte_flags)
     );
 
@@ -80,7 +86,10 @@ pub fn map_hypervisor_image() {
         )
         .expect("should work fine");
     assert_eq!(
-        HYPERVISOR_PAGE_TABLE.lock().query(sdata.into()).unwrap(),
+        HYPERVISOR_PAGE_TABLE
+            .lock()
+            .query_page(sdata.into())
+            .unwrap(),
         (sdata.into(), pte_flags)
     );
 
@@ -103,7 +112,10 @@ pub fn map_hypervisor_image() {
         )
         .expect("should work fine");
     assert_eq!(
-        HYPERVISOR_PAGE_TABLE.lock().query(sbss.into()).unwrap(),
+        HYPERVISOR_PAGE_TABLE
+            .lock()
+            .query_page(sbss.into())
+            .unwrap(),
         (sbss.into(), pte_flags)
     );
 }
@@ -130,26 +142,42 @@ pub fn map_free_memory() {
             pte_flags,
         )
         .expect("should work fine");
+
+    // test page table
     // free memory should be greater than 4k
     assert_eq!(
         HYPERVISOR_PAGE_TABLE
             .lock()
-            .query(free_mem_start.into())
+            .query_page(free_mem_start.into())
             .unwrap(),
         (free_mem_start.into(), pte_flags)
     );
     assert_eq!(
         HYPERVISOR_PAGE_TABLE
             .lock()
-            .query((free_mem_start + PAGE_SIZE_4K).into())
+            .query_page((free_mem_start + PAGE_SIZE_4K).into())
             .unwrap(),
         ((free_mem_start + PAGE_SIZE_4K).into(), pte_flags)
     );
     assert_eq!(
         HYPERVISOR_PAGE_TABLE
             .lock()
-            .query((free_mem_start + 2 * PAGE_SIZE_4K).into())
+            .query_page((free_mem_start + 2 * PAGE_SIZE_4K).into())
             .unwrap(),
         ((free_mem_start + 2 * PAGE_SIZE_4K).into(), pte_flags)
+    );
+    assert_eq!(
+        HYPERVISOR_PAGE_TABLE
+            .lock()
+            .translate((free_mem_start + 1).into())
+            .unwrap(),
+        (free_mem_start + 1).into()
+    );
+    assert_eq!(
+        HYPERVISOR_PAGE_TABLE
+            .lock()
+            .translate((free_mem_end - 1).into())
+            .unwrap(),
+        (free_mem_end - 1).into()
     );
 }

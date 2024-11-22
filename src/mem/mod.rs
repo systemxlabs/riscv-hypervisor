@@ -11,7 +11,7 @@ pub use region::*;
 use page_table::HYPERVISOR_PAGE_TABLE;
 use riscv::register::satp;
 
-pub fn init_mmu() {
+pub fn enable_mmu() {
     let page_table_root = HYPERVISOR_PAGE_TABLE.lock().root_paddr().as_usize();
     unsafe {
         satp::set(satp::Mode::Sv39, 0, page_table_root >> 12);

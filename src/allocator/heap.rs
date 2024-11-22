@@ -1,10 +1,10 @@
 use core::alloc::{GlobalAlloc, Layout};
 
-use alloc::vec::Vec;
-use buddy_system_allocator::{Heap, LockedHeap};
+use alloc::{format, string::String, vec::Vec};
+use buddy_system_allocator::LockedHeap;
 use log::debug;
 
-use crate::{allocator::frame::PHYS_FRAME_ALLOCATOR, config::PAGE_SIZE_4K};
+use crate::{allocator::frame::PHYS_FRAME_ALLOCATOR, config::PAGE_SIZE_4K, println};
 
 #[global_allocator]
 static HEAP_ALLOCATOR: BuddyHeapAllocator = BuddyHeapAllocator::new();
@@ -50,7 +50,6 @@ unsafe impl GlobalAlloc for BuddyHeapAllocator {
             if let Ok(ptr) = inner.alloc(layout) {
                 return ptr.as_ptr();
             } else {
-                debug!("starting to expand heap memory");
                 let old_size = inner.stats_total_bytes();
                 let expand_size = old_size
                     .max(layout.size())
@@ -64,7 +63,7 @@ unsafe impl GlobalAlloc for BuddyHeapAllocator {
                 {
                     let heap_ptr = heap_ptr.as_usize();
                     debug!(
-                        "expand heap memory: [{:#x}, {:#x})",
+                        "expanded heap memory: [{:#x}, {:#x})",
                         heap_ptr,
                         heap_ptr + expand_size
                     );
@@ -85,10 +84,18 @@ unsafe impl GlobalAlloc for BuddyHeapAllocator {
 
 pub fn heap_test() {
     let mut v = Vec::new();
-    for i in 0..5000 {
+    for i in 0..PAGE_SIZE_4K {
         v.push(i);
     }
-    assert_eq!(v.len(), 5000);
+    assert_eq!(v.len(), PAGE_SIZE_4K);
     assert_eq!(v[0], 0);
-    assert_eq!(v[4999], 4999);
+    assert_eq!(v[PAGE_SIZE_4K - 1], PAGE_SIZE_4K - 1);
+    debug!("LWZTEST heap test v: {:?}", v);
+
+    let mut s = String::new();
+    for _ in 0..PAGE_SIZE_4K {
+        s.push_str("测试");
+    }
+    assert_eq!(s.chars().count(), PAGE_SIZE_4K * 2);
+    debug!("LWZTEST heap test s: {}", s);
 }

@@ -1,3 +1,5 @@
+use core::sync::atomic::AtomicBool;
+
 use crate::{
     allocator::frame::PHYS_FRAME_ALLOCATOR,
     config::PAGE_SIZE_4K,
@@ -10,16 +12,21 @@ use spin::Mutex;
 
 use super::{
     addr::HostVirtAddr,
+    map_free_memory, map_hypervisor_image,
     pte::{PTEFlags, PageTableEntry},
 };
 
 const SV39_TABLE_PTE_COUNT: usize = 512;
 
 pub static HYPERVISOR_PAGE_TABLE: Mutex<PageTable> = Mutex::new(PageTable::empty());
+pub static HYPERVISOR_PAGE_TABLE_INITED: AtomicBool = AtomicBool::new(false);
 
-pub fn init_page_table() {
+pub fn init_hypervisor_page_table() {
     let page_table = PageTable::try_new().expect("Failed to create page table");
     *HYPERVISOR_PAGE_TABLE.lock() = page_table;
+    map_hypervisor_image();
+    map_free_memory();
+    HYPERVISOR_PAGE_TABLE_INITED.store(true, core::sync::atomic::Ordering::SeqCst);
 }
 
 pub struct PageTable {
@@ -81,9 +88,21 @@ impl PageTable {
         Ok(())
     }
 
-    pub fn query(&mut self, vaddr: HostVirtAddr) -> HypervisorResult<(HostPhysAddr, PTEFlags)> {
+    pub fn query_page(&mut self, vpn: HostVirtAddr) -> HypervisorResult<(HostPhysAddr, PTEFlags)> {
+        assert_eq!(vpn.as_usize() & (PAGE_SIZE_4K - 1), 0);
+        let pte = self.get_entry_mut(vpn, false)?;
+        Ok((pte.ppn(), pte.flags()))
+    }
+
+    pub fn translate(&mut self, vaddr: HostVirtAddr) -> HypervisorResult<HostPhysAddr> {
         let pte = self.get_entry_mut(vaddr, false)?;
-        Ok((pte.paddr(), pte.flags()))
+        if pte.is_valid() {
+            let offset = vaddr.as_usize() & (PAGE_SIZE_4K - 1);
+            let paddr = pte.ppn().as_usize() + offset;
+            Ok(paddr.into())
+        } else {
+            Err(HypervisorError::NotMapped)
+        }
     }
 
     fn table_of_mut<'a>(&self, paddr: HostPhysAddr) -> &'a mut [PageTableEntry] {
@@ -103,7 +122,7 @@ impl PageTable {
             *entry = PageTableEntry::new(paddr, PTEFlags::V);
         }
         if entry.is_valid() {
-            Ok(self.table_of_mut(entry.paddr()))
+            Ok(self.table_of_mut(entry.ppn()))
         } else {
             Err(HypervisorError::NotMapped)
         }

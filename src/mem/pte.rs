@@ -35,7 +35,7 @@ impl PageTableEntry {
     pub fn empty() -> Self {
         PageTableEntry(0)
     }
-    pub fn paddr(&self) -> HostPhysAddr {
+    pub fn ppn(&self) -> HostPhysAddr {
         HostPhysAddr::from(((self.0 & Self::PHYS_ADDR_MASK) << 2) as usize)
     }
     pub fn flags(&self) -> PTEFlags {

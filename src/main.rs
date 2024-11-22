@@ -53,19 +53,12 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
         panic!("no HSM extension exist on current SBI environment");
     }
 
-    // init frame
     allocator::init_frame_allocator();
-
-    // init heap
     allocator::init_heap_allocator();
 
-    // init page table
-    mem::init_page_table();
-    mem::map_hypervisor_image();
-    mem::map_free_memory();
+    mem::init_hypervisor_page_table();
 
-    // enable mmu
-    mem::init_mmu();
+    mem::enable_mmu();
     allocator::heap_test();
 
     percpu::init_percpus(hart_id);
