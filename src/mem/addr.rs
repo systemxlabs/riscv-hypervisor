@@ -115,6 +115,7 @@ macro_rules! impl_common_addr_methods {
 
 impl_common_addr_methods!(HostPhysAddr);
 impl_common_addr_methods!(HostVirtAddr);
+impl_common_addr_methods!(GuestPhysAddr);
 
 #[repr(transparent)]
 #[derive(Copy, Clone, Default, Ord, PartialOrd, Eq, PartialEq)]
@@ -133,5 +134,15 @@ pub struct HostVirtAddr(usize);
 impl fmt::Debug for HostVirtAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         f.write_fmt(format_args!("HVA:{:#x}", self.0))
+    }
+}
+
+#[repr(transparent)]
+#[derive(Copy, Clone, Default, Ord, PartialOrd, Eq, PartialEq)]
+pub struct GuestPhysAddr(usize);
+
+impl fmt::Debug for GuestPhysAddr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.write_fmt(format_args!("GPA:{:#x}", self.0))
     }
 }

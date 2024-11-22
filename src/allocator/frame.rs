@@ -44,19 +44,21 @@ impl PhysFrameAllocator {
     }
 
     pub fn alloc_frames(&mut self, num_frames: usize) -> HypervisorResult<HostPhysAddr> {
-        match num_frames.cmp(&1) {
-            core::cmp::Ordering::Equal => self
-                .inner
-                .alloc()
-                .map(|idx| (idx * PAGE_SIZE_4K + self.base).into()),
-            core::cmp::Ordering::Greater => self
-                .inner
-                .alloc_contiguous(num_frames, 1)
-                .map(|idx| (idx * PAGE_SIZE_4K + self.base).into()),
-            _ => return Err(HypervisorError::InvalidParam),
+        if num_frames < 1 {
+            return Err(HypervisorError::InvalidParam);
         }
-        .ok_or(HypervisorError::NoMemory)
-        .inspect(|_| self.used_frames += num_frames)
+        let paddr: Option<HostPhysAddr> = if num_frames == 1 {
+            self.inner
+                .alloc()
+                .map(|idx| (idx * PAGE_SIZE_4K + self.base).into())
+        } else {
+            self.inner
+                .alloc_contiguous(num_frames, 1)
+                .map(|idx| (idx * PAGE_SIZE_4K + self.base).into())
+        };
+        paddr.ok_or(HypervisorError::NoMemory).inspect(|_| {
+            self.used_frames += num_frames;
+        })
     }
 
     pub fn dealloc_frames(&mut self, pos: HostPhysAddr, num_frames: usize) {

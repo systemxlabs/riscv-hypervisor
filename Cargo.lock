@@ -119,6 +119,7 @@ dependencies = [
 name = "riscv-hypervisor"
 version = "0.1.0"
 dependencies = [
+ "bit_field",
  "bitflags",
  "bitmap-allocator",
  "buddy_system_allocator",

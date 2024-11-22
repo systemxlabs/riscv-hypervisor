@@ -71,6 +71,9 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
 
     vm::vm_configs();
 
+    let hstatus = csr::Hstatus::read();
+    info!("[HyperVisor] hstatus: {:?}", hstatus);
+
     sbi_rt::system_reset(sbi_rt::Shutdown, sbi_rt::NoReason);
     unreachable!()
 }

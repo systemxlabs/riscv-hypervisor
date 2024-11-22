@@ -49,6 +49,7 @@ impl Write for Stdout {
                 }
             }
         } else {
+            // before page table inited, we can only print ascii characters
             console_putstr(s);
         }
         Ok(())
