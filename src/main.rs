@@ -13,7 +13,7 @@ mod error;
 mod lang_items;
 mod logging;
 mod mem;
-mod percpu;
+mod pcpu;
 mod vm;
 
 use core::arch::naked_asm;
@@ -61,18 +61,21 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     mem::enable_mmu();
     allocator::heap_test();
 
-    percpu::init_percpus(hart_id);
-    let pcpu = percpu::this_cpu();
+    pcpu::init_pcpus(hart_id);
+    let pcpu = pcpu::this_cpu();
     info!(
         "[HyperVisor] hart_id: {}, stack_top: {:#x}",
         pcpu.hart_id,
         pcpu.stack_top.as_usize()
     );
 
-    vm::vm_configs();
+    vm::init_vms();
 
-    let hstatus = csr::Hstatus::read();
+    let mut hstatus = csr::Hstatus::read();
     info!("[HyperVisor] hstatus: {:?}", hstatus);
+    hstatus.set_spv(true);
+    hstatus.set_spvp(true);
+    hstatus.write();
 
     sbi_rt::system_reset(sbi_rt::Shutdown, sbi_rt::NoReason);
     unreachable!()

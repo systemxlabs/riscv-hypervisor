@@ -1,3 +1,4 @@
+use crate::vm::config;
 use alloc::{string::String, vec::Vec};
 use log::debug;
 use serde_derive::Deserialize;
@@ -7,6 +8,8 @@ pub struct VMConfig {
     pub id: usize,
     pub name: String,
     pub kernel: String,
+    pub memory: usize,
+    pub num_vcpu: usize,
 }
 
 pub fn vm_configs() -> Vec<VMConfig> {
@@ -24,3 +27,10 @@ pub fn vm_configs() -> Vec<VMConfig> {
 
 static GUEST_RCORE_TUTORIAL_V3_BIN: [u8; include_bytes!("../../guests/rCore-Tutorial-v3/os.bin")
     .len()] = *include_bytes!("../../guests/rCore-Tutorial-v3/os.bin");
+
+pub fn kernel_image(kernel: &str) -> &'static [u8] {
+    if kernel.eq_ignore_ascii_case("rCore-Tutorial-v3") {
+        return GUEST_RCORE_TUTORIAL_V3_BIN.as_ref();
+    }
+    panic!("Unsupported kernel: {}", kernel)
+}

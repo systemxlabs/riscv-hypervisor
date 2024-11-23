@@ -12,6 +12,7 @@ use page_table::HYPERVISOR_PAGE_TABLE;
 use riscv::register::satp;
 
 pub fn enable_mmu() {
+    // host virtual address -> host physical address
     let page_table_root = HYPERVISOR_PAGE_TABLE.lock().root_paddr().as_usize();
     unsafe {
         satp::set(satp::Mode::Sv39, 0, page_table_root >> 12);
