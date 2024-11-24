@@ -1,5 +1,3 @@
-use core::sync::atomic::AtomicBool;
-
 use crate::{
     allocator::frame::PHYS_FRAME_ALLOCATOR,
     config::PAGE_SIZE_4K,
@@ -8,33 +6,21 @@ use crate::{
 };
 use alloc::vec;
 use alloc::vec::Vec;
-use spin::Mutex;
 
 use super::{
-    addr::HostVirtAddr,
-    map_free_memory, map_hypervisor_image,
     pte::{PTEFlags, PageTableEntry},
+    GuestPhysAddr,
 };
 
-const SV39_TABLE_PTE_COUNT: usize = 512;
+const SV39X4_ROOT_TABLE_PTE_COUNT: usize = 512 * 4;
+const SV39X4_NON_ROOT_TABLE_PTE_COUNT: usize = 512;
 
-pub static HYPERVISOR_PAGE_TABLE: Mutex<PageTable> = Mutex::new(PageTable::empty());
-pub static HYPERVISOR_PAGE_TABLE_INITED: AtomicBool = AtomicBool::new(false);
-
-pub fn init_hypervisor_page_table() {
-    let page_table = PageTable::try_new().expect("Failed to create page table");
-    *HYPERVISOR_PAGE_TABLE.lock() = page_table;
-    map_hypervisor_image();
-    map_free_memory();
-    HYPERVISOR_PAGE_TABLE_INITED.store(true, core::sync::atomic::Ordering::SeqCst);
-}
-
-pub struct PageTable {
+pub struct GuestPageTable {
     root_paddr: HostPhysAddr,
     intrm_tables: Vec<HostPhysAddr>,
 }
 
-impl PageTable {
+impl GuestPageTable {
     pub const fn empty() -> Self {
         Self {
             root_paddr: HostPhysAddr::new(usize::MAX),
@@ -43,8 +29,10 @@ impl PageTable {
     }
 
     pub fn try_new() -> HypervisorResult<Self> {
-        let root_paddr = PHYS_FRAME_ALLOCATOR.lock().alloc_frames(1, PAGE_SIZE_4K)?;
-        unsafe { core::ptr::write_bytes(root_paddr.as_usize() as *mut u8, 0, PAGE_SIZE_4K) };
+        let root_paddr = PHYS_FRAME_ALLOCATOR
+            .lock()
+            .alloc_frames(4, PAGE_SIZE_4K * 4)?;
+        unsafe { core::ptr::write_bytes(root_paddr.as_usize() as *mut u8, 0, PAGE_SIZE_4K * 4) };
         Ok(Self {
             root_paddr,
             intrm_tables: vec![root_paddr],
@@ -57,7 +45,7 @@ impl PageTable {
 
     pub fn map(
         &mut self,
-        vaddr: HostVirtAddr,
+        vaddr: GuestPhysAddr,
         paddr: HostPhysAddr,
         flags: PTEFlags,
     ) -> HypervisorResult<()> {
@@ -74,7 +62,7 @@ impl PageTable {
 
     pub fn map_region(
         &mut self,
-        vaddr: HostVirtAddr,
+        vaddr: GuestPhysAddr,
         paddr: HostPhysAddr,
         num_pages: usize,
         flags: PTEFlags,
@@ -87,13 +75,13 @@ impl PageTable {
         Ok(())
     }
 
-    pub fn query_page(&mut self, vpn: HostVirtAddr) -> HypervisorResult<(HostPhysAddr, PTEFlags)> {
+    pub fn query_page(&mut self, vpn: GuestPhysAddr) -> HypervisorResult<(HostPhysAddr, PTEFlags)> {
         assert_eq!(vpn.as_usize() & (PAGE_SIZE_4K - 1), 0);
         let pte = self.get_entry_mut(vpn, false)?;
         Ok((pte.ppn(), pte.flags()))
     }
 
-    pub fn translate(&mut self, vaddr: HostVirtAddr) -> HypervisorResult<HostPhysAddr> {
+    pub fn translate(&mut self, vaddr: GuestPhysAddr) -> HypervisorResult<HostPhysAddr> {
         let pte = self.get_entry_mut(vaddr, false)?;
         if pte.is_valid() {
             let offset = vaddr.as_usize() & (PAGE_SIZE_4K - 1);
@@ -104,10 +92,16 @@ impl PageTable {
         }
     }
 
-    fn table_of_mut<'a>(&self, paddr: HostPhysAddr) -> &'a mut [PageTableEntry] {
+    fn root_table_of_mut<'a>(&self, paddr: HostPhysAddr) -> &'a mut [PageTableEntry] {
         let ptr = paddr.as_usize() as _;
         // as we did identical mapping, so vaddr = paddr
-        unsafe { core::slice::from_raw_parts_mut(ptr, SV39_TABLE_PTE_COUNT) }
+        unsafe { core::slice::from_raw_parts_mut(ptr, SV39X4_ROOT_TABLE_PTE_COUNT) }
+    }
+
+    fn non_root_table_of_mut<'a>(&self, paddr: HostPhysAddr) -> &'a mut [PageTableEntry] {
+        let ptr = paddr.as_usize() as _;
+        // as we did identical mapping, so vaddr = paddr
+        unsafe { core::slice::from_raw_parts_mut(ptr, SV39X4_NON_ROOT_TABLE_PTE_COUNT) }
     }
 
     fn next_table_mut<'a>(
@@ -121,7 +115,7 @@ impl PageTable {
             *entry = PageTableEntry::new(paddr, PTEFlags::V);
         }
         if entry.is_valid() {
-            Ok(self.table_of_mut(entry.ppn()))
+            Ok(self.non_root_table_of_mut(entry.ppn()))
         } else {
             Err(HypervisorError::NotMapped)
         }
@@ -129,27 +123,30 @@ impl PageTable {
 
     fn get_entry_mut(
         &mut self,
-        vaddr: HostVirtAddr,
+        vaddr: GuestPhysAddr,
         create_if_absent: bool,
     ) -> HypervisorResult<&mut PageTableEntry> {
-        let table1 = self.table_of_mut(self.root_paddr);
-        let table1_pte_index = (vaddr.as_usize() >> (12 + 18)) & (SV39_TABLE_PTE_COUNT - 1);
+        let table1 = self.root_table_of_mut(self.root_paddr);
+        let table1_pte_index = (vaddr.as_usize() >> (12 + 18)) & (SV39X4_ROOT_TABLE_PTE_COUNT - 1);
         let table1_pte = &mut table1[table1_pte_index];
 
         let table2 = self.next_table_mut(table1_pte, create_if_absent)?;
-        let table2_pte_index = (vaddr.as_usize() >> (12 + 9)) & (SV39_TABLE_PTE_COUNT - 1);
+        let table2_pte_index =
+            (vaddr.as_usize() >> (12 + 9)) & (SV39X4_NON_ROOT_TABLE_PTE_COUNT - 1);
         let table2_pte = &mut table2[table2_pte_index];
 
         let table3 = self.next_table_mut(table2_pte, create_if_absent)?;
-        let table3_pte_index = (vaddr.as_usize() >> 12) & (SV39_TABLE_PTE_COUNT - 1);
+        let table3_pte_index = (vaddr.as_usize() >> 12) & (SV39X4_NON_ROOT_TABLE_PTE_COUNT - 1);
         let table3_pte = &mut table3[table3_pte_index];
 
         Ok(table3_pte)
     }
 }
 
-impl Drop for PageTable {
+impl Drop for GuestPageTable {
     fn drop(&mut self) {
+        let root_paddr = self.intrm_tables.remove(0);
+        PHYS_FRAME_ALLOCATOR.lock().dealloc_frames(root_paddr, 4);
         for paddr in self.intrm_tables.iter() {
             PHYS_FRAME_ALLOCATOR.lock().dealloc_frames(*paddr, 1);
         }

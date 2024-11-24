@@ -43,7 +43,12 @@ impl PhysFrameAllocator {
         self.inner.insert(0..self.total_frames);
     }
 
-    pub fn alloc_frames(&mut self, num_frames: usize) -> HypervisorResult<HostPhysAddr> {
+    pub fn alloc_frames(
+        &mut self,
+        num_frames: usize,
+        align: usize,
+    ) -> HypervisorResult<HostPhysAddr> {
+        assert_eq!(align % PAGE_SIZE_4K, 0);
         if num_frames < 1 {
             return Err(HypervisorError::InvalidParam);
         }
@@ -53,7 +58,7 @@ impl PhysFrameAllocator {
                 .map(|idx| (idx * PAGE_SIZE_4K + self.base).into())
         } else {
             self.inner
-                .alloc_contiguous(num_frames, 1)
+                .alloc_contiguous(num_frames, align / PAGE_SIZE_4K)
                 .map(|idx| (idx * PAGE_SIZE_4K + self.base).into())
         };
         paddr.ok_or(HypervisorError::NoMemory).inspect(|_| {

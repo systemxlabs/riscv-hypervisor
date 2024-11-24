@@ -10,7 +10,7 @@ use crate::{allocator::frame::PHYS_FRAME_ALLOCATOR, config::PAGE_SIZE_4K, printl
 static HEAP_ALLOCATOR: BuddyHeapAllocator = BuddyHeapAllocator::new();
 
 #[alloc_error_handler]
-pub fn handle_alloc_error(layout: core::alloc::Layout) -> ! {
+pub fn handle_alloc_error(layout: Layout) -> ! {
     panic!("Heap allocation error, layout = {:?}", layout);
 }
 
@@ -18,7 +18,7 @@ pub fn init_heap_allocator() {
     let num_pages = 8;
     let heap_ptr = PHYS_FRAME_ALLOCATOR
         .lock()
-        .alloc_frames(num_pages)
+        .alloc_frames(num_pages, PAGE_SIZE_4K)
         .expect("Free memory should be enough");
     HEAP_ALLOCATOR.init(heap_ptr.as_usize(), num_pages * PAGE_SIZE_4K);
 }
@@ -44,7 +44,7 @@ impl BuddyHeapAllocator {
 }
 
 unsafe impl GlobalAlloc for BuddyHeapAllocator {
-    unsafe fn alloc(&self, layout: core::alloc::Layout) -> *mut u8 {
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         loop {
             let mut inner = self.inner.lock();
             if let Ok(ptr) = inner.alloc(layout) {
@@ -59,7 +59,7 @@ unsafe impl GlobalAlloc for BuddyHeapAllocator {
                 drop(inner);
                 if let Ok(heap_ptr) = PHYS_FRAME_ALLOCATOR
                     .lock()
-                    .alloc_frames(expand_size / PAGE_SIZE_4K)
+                    .alloc_frames(expand_size / PAGE_SIZE_4K, PAGE_SIZE_4K)
                 {
                     let heap_ptr = heap_ptr.as_usize();
                     debug!(
@@ -75,7 +75,7 @@ unsafe impl GlobalAlloc for BuddyHeapAllocator {
         }
     }
 
-    unsafe fn dealloc(&self, ptr: *mut u8, layout: core::alloc::Layout) {
+    unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         self.inner
             .lock()
             .dealloc(unsafe { core::ptr::NonNull::new_unchecked(ptr) }, layout)
@@ -90,12 +90,12 @@ pub fn heap_test() {
     assert_eq!(v.len(), PAGE_SIZE_4K);
     assert_eq!(v[0], 0);
     assert_eq!(v[PAGE_SIZE_4K - 1], PAGE_SIZE_4K - 1);
-    debug!("LWZTEST heap test v: {:?}", v);
+    // debug!("LWZTEST heap test v: {:?}", v);
 
     let mut s = String::new();
     for _ in 0..PAGE_SIZE_4K {
         s.push_str("测试");
     }
     assert_eq!(s.chars().count(), PAGE_SIZE_4K * 2);
-    debug!("LWZTEST heap test s: {}", s);
+    // debug!("LWZTEST heap test s: {}", s);
 }

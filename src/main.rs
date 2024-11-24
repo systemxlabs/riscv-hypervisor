@@ -19,7 +19,7 @@ mod vm;
 use core::arch::naked_asm;
 
 use crate::config::BOOT_STACK_SIZE;
-use log::info;
+use log::{debug, info};
 
 #[link_section = ".bss.stack"]
 static BOOT_STACK: [u8; BOOT_STACK_SIZE] = [0u8; BOOT_STACK_SIZE];
@@ -77,6 +77,19 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     hstatus.set_spvp(true);
     hstatus.write();
 
+    let mut vsstatus = csr::Vsstatus::read();
+    info!("[HyperVisor] vsstatus: {:?}", vsstatus);
+
+    let mut sstatus = riscv::register::sstatus::read();
+    info!("[HyperVisor] sstatus: {:?}", sstatus);
+
+    let guest_page_table = mem::GuestPageTable::try_new().unwrap();
+    debug!(
+        "guest page table root addr: {:?}",
+        guest_page_table.root_paddr()
+    );
+
+    info!("[HyperVisor] exited");
     sbi_rt::system_reset(sbi_rt::Shutdown, sbi_rt::NoReason);
     unreachable!()
 }

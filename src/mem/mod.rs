@@ -1,9 +1,11 @@
 pub mod addr;
+mod guest_page_table;
 pub mod page_table;
 pub mod pte;
 pub mod region;
 
 pub use addr::*;
+pub use guest_page_table::*;
 pub use page_table::*;
 pub use pte::*;
 pub use region::*;

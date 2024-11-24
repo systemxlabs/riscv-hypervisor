@@ -1,6 +1,8 @@
+use alloc::vec::Vec;
 use log::debug;
 use spin::Once;
 
+use crate::vm::VCpu;
 use crate::{
     allocator::PHYS_FRAME_ALLOCATOR,
     config::{PAGE_SIZE_4K, PCPU_STACK_SIZE},
@@ -11,6 +13,7 @@ use crate::{
 pub struct PCpu {
     pub hart_id: usize,
     pub stack_top: HostPhysAddr,
+    pub vcpus: Vec<VCpu>,
 }
 
 static PCPU_BASE: Once<HostPhysAddr> = Once::new();
@@ -23,17 +26,21 @@ pub fn init_pcpus(boot_hart_id: usize) {
     debug!("pcpu size: {:#x}", pcpu_size);
     let pcpu_base = PHYS_FRAME_ALLOCATOR
         .lock()
-        .alloc_frames((pcpu_size + PAGE_SIZE_4K - 1) / PAGE_SIZE_4K)
+        .alloc_frames((pcpu_size + PAGE_SIZE_4K - 1) / PAGE_SIZE_4K, PAGE_SIZE_4K)
         .expect("Failed to alloc pcpu pages");
     PCPU_BASE.call_once(|| pcpu_base);
     for cpu_id in 0..cpu_nums {
         let stack_top = PHYS_FRAME_ALLOCATOR
             .lock()
-            .alloc_frames((PCPU_STACK_SIZE + PAGE_SIZE_4K - 1) / PAGE_SIZE_4K)
+            .alloc_frames(
+                (PCPU_STACK_SIZE + PAGE_SIZE_4K - 1) / PAGE_SIZE_4K,
+                PAGE_SIZE_4K,
+            )
             .expect("Failed to alloc pcpu stack");
         let pcpu = PCpu {
             hart_id: cpu_id,
             stack_top,
+            vcpus: Vec::new(),
         };
         let pcpu_addr = pcpu_base.as_usize() + cpu_id * pcpu_size;
         unsafe {
