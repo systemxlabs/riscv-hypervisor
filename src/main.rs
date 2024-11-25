@@ -62,17 +62,10 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     allocator::heap_test();
 
     pcpu::init_pcpus(hart_id);
-    let pcpu = pcpu::this_cpu();
-    info!(
-        "[HyperVisor] hart_id: {}, stack_top: {:#x}",
-        pcpu.hart_id,
-        pcpu.stack_top.as_usize()
-    );
 
-    // vm::init_vms();
-    let vm_configs = vm::vm_configs();
-    let vm = vm::VM::new(vm_configs[0].clone()).unwrap();
-    // vm.boot();
+    vm::init_vms();
+    vm::bind_vcpus();
+
     let mut hstatus = csr::Hstatus::read();
     info!("[HyperVisor] hstatus: {:?}", hstatus);
     hstatus.set_spv(true);

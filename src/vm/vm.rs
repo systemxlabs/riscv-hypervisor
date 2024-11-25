@@ -1,23 +1,55 @@
+use core::sync::atomic::AtomicUsize;
+
 use crate::allocator::PHYS_FRAME_ALLOCATOR;
 use crate::config::PAGE_SIZE_4K;
 use crate::error::HypervisorResult;
+use crate::pcpu::GLOBAL_PCPUS;
 use alloc::vec::Vec;
-use spin::lock_api::Mutex;
+use log::debug;
+use spin::Once;
 
 use crate::mem::{align_up, GuestPageTable, PTEFlags};
-use crate::vm::{config, kernel_image, VCpu, VMConfig};
+use crate::vm::{config, kernel_image, VMConfig};
 
-pub static GLOBAL_VMS: Mutex<Vec<VM>> = Mutex::new(Vec::new());
+use super::VCpu;
+
+pub static GLOBAL_VMS: Once<Vec<VM>> = Once::new();
+pub static VM_ID_GENERATOR: AtomicUsize = AtomicUsize::new(0);
 
 pub fn init_vms() {
     let vm_configs = config::vm_configs();
+    let mut vms = Vec::new();
     for vm_config in vm_configs {
         let vm = VM::new(vm_config).expect("Failed to create VM");
-        GLOBAL_VMS.lock().push(vm);
+        vms.push(vm);
+    }
+    GLOBAL_VMS.call_once(|| vms);
+}
+
+pub fn bind_vcpus() {
+    let num_pcpu = unsafe { GLOBAL_PCPUS.get_unchecked().len() };
+    unsafe {
+        let mut idx = 0;
+        for vm in GLOBAL_VMS.get_unchecked() {
+            for vcpu_id in vm.vcpus.iter().map(|vcpu| vcpu.vcpu_id) {
+                let pcpu_id = idx % num_pcpu;
+                bind_vcpu_to_pcpu(vcpu_id, pcpu_id);
+                idx += 1;
+            }
+        }
+    }
+}
+
+fn bind_vcpu_to_pcpu(vcpu_id: usize, pcpu_id: usize) {
+    unsafe {
+        let pcpu = GLOBAL_PCPUS.get_unchecked().get_unchecked(pcpu_id);
+        pcpu.vcpus.lock().push(vcpu_id);
+        debug!("[Hypervisor] bind vcpu {} to pcpu {}", vcpu_id, pcpu_id);
     }
 }
 
 pub struct VM {
+    vm_id: usize,
     vcpus: Vec<VCpu>,
     guest_page_table: GuestPageTable,
     kernel_image: &'static [u8],
@@ -28,18 +60,17 @@ impl VM {
     pub fn new(vm_config: VMConfig) -> HypervisorResult<Self> {
         let kernel_image = kernel_image(vm_config.kernel.as_str());
         let guest_page_table = init_guest_page_table(&vm_config)?;
-        // TODO vcpu
+        let mut vcpus = Vec::new();
+        for _ in 0..vm_config.num_vcpu {
+            vcpus.push(VCpu::new());
+        }
         Ok(Self {
-            vcpus: Vec::new(),
+            vm_id: VM_ID_GENERATOR.fetch_add(1, core::sync::atomic::Ordering::SeqCst),
+            vcpus,
             guest_page_table,
             kernel_image,
             memory_limit: vm_config.memory_limit,
         })
-    }
-
-    pub fn boot(&self) -> ! {
-        // TODO
-        unreachable!()
     }
 }
 
