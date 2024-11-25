@@ -21,13 +21,6 @@ pub struct GuestPageTable {
 }
 
 impl GuestPageTable {
-    pub const fn empty() -> Self {
-        Self {
-            root_paddr: HostPhysAddr::new(usize::MAX),
-            intrm_tables: Vec::new(),
-        }
-    }
-
     pub fn try_new() -> HypervisorResult<Self> {
         let root_paddr = PHYS_FRAME_ALLOCATOR
             .lock()

@@ -1,9 +1,8 @@
 [
     {
-        "id": 1,
         "name": "rCore-guest1",
         "kernel": "rCore-Tutorial-v3",
-        "memory": 1024,
+        "memory_limit": 1024,
         "num_vcpu": 1
     }
 ]

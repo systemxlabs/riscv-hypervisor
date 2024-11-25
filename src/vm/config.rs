@@ -5,10 +5,9 @@ use serde_derive::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct VMConfig {
-    pub id: usize,
     pub name: String,
     pub kernel: String,
-    pub memory: usize,
+    pub memory_limit: usize,
     pub num_vcpu: usize,
 }
 

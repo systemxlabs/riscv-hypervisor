@@ -1,5 +1,6 @@
 # riscv-hypervisor
-- [ ] Load guest elf image
+- [ ] CPU virtualization
+- [ ] Memory virtualization (two-stage address translation)
 - [ ] Multi-core support
 - [ ] Multi-guest support
 - [ ] IOMMU enabled

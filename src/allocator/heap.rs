@@ -90,12 +90,12 @@ pub fn heap_test() {
     assert_eq!(v.len(), PAGE_SIZE_4K);
     assert_eq!(v[0], 0);
     assert_eq!(v[PAGE_SIZE_4K - 1], PAGE_SIZE_4K - 1);
-    // debug!("LWZTEST heap test v: {:?}", v);
+    debug!("LWZTEST heap test v: {:?}", v);
 
     let mut s = String::new();
     for _ in 0..PAGE_SIZE_4K {
         s.push_str("测试");
     }
     assert_eq!(s.chars().count(), PAGE_SIZE_4K * 2);
-    // debug!("LWZTEST heap test s: {}", s);
+    debug!("LWZTEST heap test s: {}", s);
 }

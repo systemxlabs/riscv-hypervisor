@@ -14,12 +14,12 @@ mod lang_items;
 mod logging;
 mod mem;
 mod pcpu;
+mod sbi;
 mod vm;
-
-use core::arch::naked_asm;
 
 use crate::config::BOOT_STACK_SIZE;
 use log::{debug, info};
+use vm::GLOBAL_VMS;
 
 #[link_section = ".bss.stack"]
 static BOOT_STACK: [u8; BOOT_STACK_SIZE] = [0u8; BOOT_STACK_SIZE];
@@ -31,7 +31,7 @@ pub unsafe extern "C" fn start() -> ! {
     // PC = 0x8020_0000
     // a0 = hartid
     // a1 = dtb
-    naked_asm!(
+    core::arch::naked_asm!(
         "la sp, {boot_stack}",  // load addr of the symbol `BOOT_STACK` to sp
         "li t0, {boot_stack_size}",  // load immediate `BOOT_STACK_SIZE` to t0
         "add sp, sp, t0",  // setup boot stack
@@ -69,25 +69,15 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
         pcpu.stack_top.as_usize()
     );
 
-    vm::init_vms();
-
+    // vm::init_vms();
+    let vm_configs = vm::vm_configs();
+    let vm = vm::VM::new(vm_configs[0].clone()).unwrap();
+    // vm.boot();
     let mut hstatus = csr::Hstatus::read();
     info!("[HyperVisor] hstatus: {:?}", hstatus);
     hstatus.set_spv(true);
     hstatus.set_spvp(true);
     hstatus.write();
-
-    let mut vsstatus = csr::Vsstatus::read();
-    info!("[HyperVisor] vsstatus: {:?}", vsstatus);
-
-    let mut sstatus = riscv::register::sstatus::read();
-    info!("[HyperVisor] sstatus: {:?}", sstatus);
-
-    let guest_page_table = mem::GuestPageTable::try_new().unwrap();
-    debug!(
-        "guest page table root addr: {:?}",
-        guest_page_table.root_paddr()
-    );
 
     info!("[HyperVisor] exited");
     sbi_rt::system_reset(sbi_rt::Shutdown, sbi_rt::NoReason);
