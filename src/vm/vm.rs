@@ -33,18 +33,23 @@ pub fn bind_vcpus() {
         for vm in GLOBAL_VMS.get_unchecked() {
             for vcpu_id in vm.vcpus.iter().map(|vcpu| vcpu.vcpu_id) {
                 let pcpu_id = idx % num_pcpu;
-                bind_vcpu_to_pcpu(vcpu_id, pcpu_id);
+                bind_vcpu_to_pcpu(vm.vm_id, vcpu_id, pcpu_id);
                 idx += 1;
             }
         }
     }
 }
 
-fn bind_vcpu_to_pcpu(vcpu_id: usize, pcpu_id: usize) {
+fn bind_vcpu_to_pcpu(vm_id: usize, vcpu_id: usize, pcpu_id: usize) {
     unsafe {
         let pcpu = GLOBAL_PCPUS.get_unchecked().get_unchecked(pcpu_id);
-        pcpu.vcpus.lock().push(vcpu_id);
-        debug!("[Hypervisor] bind vcpu {} to pcpu {}", vcpu_id, pcpu_id);
+        let mut vcpus = pcpu.vcpus.lock();
+        assert!(!vcpus.contains(&(vm_id, vcpu_id)));
+        vcpus.push((vm_id, vcpu_id));
+        debug!(
+            "[Hypervisor] bind vm {} vcpu {} to pcpu {}",
+            vm_id, vcpu_id, pcpu_id
+        );
     }
 }
 

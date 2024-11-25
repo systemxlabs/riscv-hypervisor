@@ -15,7 +15,8 @@ pub static GLOBAL_PCPUS: Once<Vec<PCpu>> = Once::new();
 pub struct PCpu {
     pub hart_id: usize,
     pub stack_top: HostPhysAddr,
-    pub vcpus: Mutex<Vec<usize>>,
+    // vec of (vm_id, vcpu_id)
+    pub vcpus: Mutex<Vec<(usize, usize)>>,
 }
 
 pub fn init_pcpus(boot_hart_id: usize) {
