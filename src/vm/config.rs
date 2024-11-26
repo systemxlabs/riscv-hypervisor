@@ -27,9 +27,15 @@ pub fn vm_configs() -> Vec<VMConfig> {
 static GUEST_RCORE_TUTORIAL_V3_BIN: [u8; include_bytes!("../../guests/rCore-Tutorial-v3/os.bin")
     .len()] = *include_bytes!("../../guests/rCore-Tutorial-v3/os.bin");
 
+static GUEST_HELLO_WORLD_BIN: [u8; include_bytes!("../../guests/hello-world/hello-world.bin")
+    .len()] = *include_bytes!("../../guests/hello-world/hello-world.bin");
+
 pub fn kernel_image(kernel: &str) -> &'static [u8] {
     if kernel.eq_ignore_ascii_case("rCore-Tutorial-v3") {
         return GUEST_RCORE_TUTORIAL_V3_BIN.as_ref();
+    }
+    if kernel.eq_ignore_ascii_case("hello-world") {
+        return GUEST_HELLO_WORLD_BIN.as_ref();
     }
     panic!("Unsupported kernel: {}", kernel)
 }

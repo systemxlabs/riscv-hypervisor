@@ -38,12 +38,12 @@ impl PCpu {
         vcpu.guest_cpu_state.sepc = vm.entry.as_usize();
 
         let gpt_root = vm.guest_page_table.root_paddr().as_usize();
-        let hgatp = 8usize << 60 | gpt_root >> 12;
+        let mut hgatp = csr::Hgatp::read();
+        hgatp.set_mode(csr::Mode::Sv39x4);
+        hgatp.set_ppn(gpt_root >> 12);
+        hgatp.write();
+
         unsafe {
-            core::arch::asm!(
-                "csrw hgatp, {hgatp}",
-                hgatp = in(reg) hgatp,
-            );
             core::arch::asm!("hfence.gvma");
         }
 
@@ -53,16 +53,22 @@ impl PCpu {
 }
 
 fn run_vcpu(vcpu: &mut VCpu) -> bool {
+    let scause = riscv::register::scause::read();
+    debug!("[Hypervisor] before scause: {:?}", scause.cause());
+
     unsafe {
         _vm_enter(vcpu);
     }
 
+    debug!("vm exit");
     vmexit_handler(vcpu)
 }
 
 fn vmexit_handler(vcpu: &mut VCpu) -> bool {
     let scause = riscv::register::scause::read();
     debug!("[Hypervisor] scause: {:?}", scause.cause());
+    let stval = riscv::register::stval::read();
+    debug!("[Hypervisor] stval: {:#x}", stval);
     true
 }
 
