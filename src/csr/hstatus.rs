@@ -15,6 +15,11 @@ impl Hstatus {
         private::write(*self);
     }
 
+    #[inline]
+    pub fn bits(&self) -> usize {
+        self.bits
+    }
+
     /// Supervisor Previous Virtualization mode.
     #[inline]
     pub fn spv(&self) -> bool {

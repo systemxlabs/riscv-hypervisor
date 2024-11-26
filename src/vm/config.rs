@@ -1,6 +1,6 @@
 use crate::vm::config;
 use alloc::{string::String, vec::Vec};
-use log::debug;
+use log::{debug, info};
 use serde_derive::Deserialize;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -13,10 +13,10 @@ pub struct VMConfig {
 
 pub fn vm_configs() -> Vec<VMConfig> {
     let vm_configs = serde_json::from_str(include_str!("../../vm_configs.json")).unwrap();
-    debug!("vm_configs: {:?}", vm_configs);
+    info!("[Hypervisor] Parsed VM configs: {:?}", vm_configs);
 
     debug!(
-        "Guest rCore-tutorial-v3 bin: [{:#x}, {}) {}bytes",
+        "Guest rCore-tutorial-v3 bin: [{:#x}, {:#x}) {}bytes",
         GUEST_RCORE_TUTORIAL_V3_BIN.as_ptr() as usize,
         GUEST_RCORE_TUTORIAL_V3_BIN.as_ptr() as usize + GUEST_RCORE_TUTORIAL_V3_BIN.len(),
         GUEST_RCORE_TUTORIAL_V3_BIN.len()

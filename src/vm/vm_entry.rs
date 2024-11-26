@@ -3,7 +3,7 @@ use crate::{vcpu_guest_csr_offset, vcpu_hyp_csr_offset};
 
 #[naked]
 #[no_mangle]
-pub unsafe extern "C" fn _vm_enter(vcpu: &mut VCpu) -> ! {
+pub unsafe extern "C" fn _vm_enter(vcpu: &mut VCpu) {
     core::arch::naked_asm!(
         // Sava hypervisor state
         // ra

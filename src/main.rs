@@ -72,6 +72,9 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     hstatus.set_spvp(true);
     hstatus.write();
 
+    let pcpu = pcpu::this_cpu();
+    pcpu.run();
+
     info!("[HyperVisor] exited");
     sbi_rt::system_reset(sbi_rt::Shutdown, sbi_rt::NoReason);
     unreachable!()

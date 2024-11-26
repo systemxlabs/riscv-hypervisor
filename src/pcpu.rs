@@ -1,12 +1,15 @@
 use alloc::vec::Vec;
 use log::{debug, info};
+use riscv::register::sstatus;
 use spin::{Mutex, Once};
 
 use crate::{
     allocator::PHYS_FRAME_ALLOCATOR,
     config::{PAGE_SIZE_4K, PCPU_STACK_SIZE},
+    csr,
     error::HypervisorResult,
     mem::{HostPhysAddr, HostVirtAddr},
+    vm::{VCpu, _vm_enter, GLOBAL_VMS},
 };
 
 pub static GLOBAL_PCPUS: Once<Vec<PCpu>> = Once::new();
@@ -17,6 +20,50 @@ pub struct PCpu {
     pub stack_top: HostPhysAddr,
     // vec of (vm_id, vcpu_id)
     pub vcpus: Mutex<Vec<(usize, usize)>>,
+}
+
+impl PCpu {
+    pub fn run(&self) {
+        let (vm_id, vcpu_id) = self.vcpus.lock()[0];
+        let vm = unsafe { GLOBAL_VMS.get_unchecked().get_unchecked(vm_id) };
+        let mut vcpu = unsafe { vm.vcpus.get_unchecked(vcpu_id).lock() };
+
+        let hstatus = csr::Hstatus::read();
+        vcpu.guest_cpu_state.hstatus = hstatus.bits();
+
+        let mut sstatus = csr::Sstatus::read();
+        sstatus.set_spp(true);
+        vcpu.guest_cpu_state.sstatus = sstatus.bits();
+
+        vcpu.guest_cpu_state.sepc = vm.entry.as_usize();
+
+        let gpt_root = vm.guest_page_table.root_paddr().as_usize();
+        let hgatp = 8usize << 60 | gpt_root >> 12;
+        unsafe {
+            core::arch::asm!(
+                "csrw hgatp, {hgatp}",
+                hgatp = in(reg) hgatp,
+            );
+            core::arch::asm!("hfence.gvma");
+        }
+
+        info!("[Hypervisor] run vcpu: {:?}", vcpu_id);
+        while !run_vcpu(&mut vcpu) {}
+    }
+}
+
+fn run_vcpu(vcpu: &mut VCpu) -> bool {
+    unsafe {
+        _vm_enter(vcpu);
+    }
+
+    vmexit_handler(vcpu)
+}
+
+fn vmexit_handler(vcpu: &mut VCpu) -> bool {
+    let scause = riscv::register::scause::read();
+    debug!("[Hypervisor] scause: {:?}", scause.cause());
+    true
 }
 
 pub fn init_pcpus(boot_hart_id: usize) {
