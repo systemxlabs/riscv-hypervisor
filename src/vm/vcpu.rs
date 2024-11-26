@@ -1,3 +1,4 @@
+use core::ops::{Deref, DerefMut};
 use core::{mem::offset_of, sync::atomic::AtomicUsize};
 
 static VCPU_ID_GENERATOR: AtomicUsize = AtomicUsize::new(0);
@@ -47,10 +48,6 @@ macro_rules! vcpu_guest_csr_offset {
 
 #[derive(Default, Debug)]
 #[repr(C)]
-pub struct GeneralPurposeRegs([usize; 32]);
-
-#[derive(Default, Debug)]
-#[repr(C)]
 pub struct GuestCpuState {
     pub gprs: GeneralPurposeRegs,
     pub sstatus: usize,
@@ -67,4 +64,28 @@ pub struct HypervisorCpuState {
     pub scounteren: usize,
     pub stvec: usize,
     pub sscratch: usize,
+}
+
+#[derive(Default, Debug)]
+#[repr(C)]
+pub struct GeneralPurposeRegs([usize; 32]);
+
+impl GeneralPurposeRegs {
+    pub fn sp(&self) -> usize {
+        self.0[2]
+    }
+}
+
+impl Deref for GeneralPurposeRegs {
+    type Target = [usize; 32];
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for GeneralPurposeRegs {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
 }

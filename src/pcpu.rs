@@ -9,7 +9,7 @@ use crate::{
     csr,
     error::HypervisorResult,
     mem::{HostPhysAddr, HostVirtAddr},
-    vm::{VCpu, _vm_enter, GLOBAL_VMS},
+    vm::{VCpu, _vm_entry, GLOBAL_VMS},
 };
 
 pub static GLOBAL_PCPUS: Once<Vec<PCpu>> = Once::new();
@@ -53,22 +53,34 @@ impl PCpu {
 }
 
 fn run_vcpu(vcpu: &mut VCpu) -> bool {
-    let scause = riscv::register::scause::read();
-    debug!("[Hypervisor] before scause: {:?}", scause.cause());
-
     unsafe {
-        _vm_enter(vcpu);
+        _vm_entry(vcpu);
     }
 
-    debug!("vm exit");
     vmexit_handler(vcpu)
 }
 
 fn vmexit_handler(vcpu: &mut VCpu) -> bool {
-    let scause = riscv::register::scause::read();
+    let scause = csr::Scause::read();
     debug!("[Hypervisor] scause: {:?}", scause.cause());
     let stval = riscv::register::stval::read();
     debug!("[Hypervisor] stval: {:#x}", stval);
+
+    match scause.cause() {
+        csr::Trap::Exception(csr::Exception::VirtualSupervisorEnvCall) => {
+            let a0 = vcpu.guest_cpu_state.gprs[10];
+            let a1 = vcpu.guest_cpu_state.gprs[11];
+            info!(
+                "[Hypervisor] VSuperEcall Reset: a0: {:#x}, a1: {:#x}",
+                a0, a1
+            );
+            info!("[Hypervisor] Shutdown vm normally!");
+            return true;
+        }
+        _ => {
+            panic!("Unknown trap: {:?}", scause.cause());
+        }
+    }
     true
 }
 

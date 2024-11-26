@@ -3,7 +3,7 @@ use crate::{vcpu_guest_csr_offset, vcpu_hyp_csr_offset};
 
 #[naked]
 #[no_mangle]
-pub unsafe extern "C" fn _vm_enter(vcpu: &mut VCpu) {
+pub unsafe extern "C" fn _vm_entry(vcpu: &mut VCpu) {
     core::arch::naked_asm!(
         // Sava hypervisor state
         // ra
@@ -71,7 +71,6 @@ pub unsafe extern "C" fn _vm_enter(vcpu: &mut VCpu) {
         "ld   x7, ({guest_x7})(a0)",
         "ld   x8, ({guest_x8})(a0)",
         "ld   x9, ({guest_x9})(a0)",
-        "ld   x10, ({guest_x10})(a0)",
         "ld   x11, ({guest_x11})(a0)",
         "ld   x12, ({guest_x12})(a0)",
         "ld   x13, ({guest_x13})(a0)",
@@ -93,6 +92,8 @@ pub unsafe extern "C" fn _vm_enter(vcpu: &mut VCpu) {
         "ld   x29, ({guest_x29})(a0)",
         "ld   x30, ({guest_x30})(a0)",
         "ld   x31, ({guest_x31})(a0)",
+        // a0 should be loaded last
+        "ld   x10, ({guest_x10})(a0)",
         "sret",
         hyp_x1 = const VCpu::hyp_gpr_offset(1),
         hyp_x2 = const VCpu::hyp_gpr_offset(2),
