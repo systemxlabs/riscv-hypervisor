@@ -57,6 +57,15 @@ impl Hedeleg {
     }
 
     #[inline]
+    pub fn inst_page_fault(&self) -> bool {
+        self.bits.get_bit(12)
+    }
+    #[inline]
+    pub fn set_inst_page_fault(&mut self, val: bool) {
+        self.bits.set_bit(12, val);
+    }
+
+    #[inline]
     pub fn load_page_fault(&self) -> bool {
         self.bits.get_bit(13)
     }

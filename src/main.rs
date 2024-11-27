@@ -67,10 +67,10 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     vm::bind_vcpus();
 
     let mut hstatus = csr::Hstatus::read();
-    info!("[HyperVisor] hstatus: {:?}", hstatus);
     hstatus.set_spv(true);
     hstatus.set_spvp(true);
     hstatus.write();
+    debug!("[HyperVisor] hstatus: {:?}", csr::Hstatus::read());
 
     let mut hedeleg = csr::Hedeleg::read();
     hedeleg.set_env_call_from_u_or_vu(true);
@@ -79,7 +79,7 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     hedeleg.set_illegal_inst(true);
     hedeleg.set_inst_access_fault(true);
     hedeleg.write();
-    info!("[HyperVisor] test hedeleg: {:?}", hedeleg);
+    debug!("[HyperVisor] hedeleg: {:?}", csr::Hedeleg::read());
 
     let pcpu = pcpu::this_cpu();
     pcpu.run();

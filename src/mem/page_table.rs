@@ -26,7 +26,7 @@ pub fn init_hypervisor_page_table() {
     *HYPERVISOR_PAGE_TABLE.lock() = page_table;
     map_hypervisor_image();
     map_free_memory();
-    HYPERVISOR_PAGE_TABLE_INITED.store(true, core::sync::atomic::Ordering::SeqCst);
+    // HYPERVISOR_PAGE_TABLE_INITED.store(true, core::sync::atomic::Ordering::SeqCst);
 }
 
 pub struct PageTable {
