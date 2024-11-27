@@ -70,11 +70,7 @@ fn vmexit_handler(vcpu: &mut VCpu) -> bool {
     match scause.cause() {
         csr::Trap::Exception(csr::Exception::VirtualSupervisorEnvCall) => {
             let a7 = vcpu.guest_cpu_state.gprs[17];
-            let ret = sbi::handle_sbi_call(vcpu);
-            vcpu.guest_cpu_state.gprs[10] = ret.error;
-            if a7 != 1 {
-                vcpu.guest_cpu_state.gprs[11] = ret.value;
-            }
+            sbi::handle_sbi_call(vcpu);
             vcpu.guest_cpu_state.sepc += 4;
             if a7 == 8 {
                 info!("[Hypervisor] Shutdown vm normally!");
