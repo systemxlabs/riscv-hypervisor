@@ -9,6 +9,7 @@ use crate::{
     csr,
     error::HypervisorResult,
     mem::{HostPhysAddr, HostVirtAddr},
+    sbi,
     vm::{VCpu, _vm_entry, GLOBAL_VMS},
 };
 
@@ -68,14 +69,16 @@ fn vmexit_handler(vcpu: &mut VCpu) -> bool {
 
     match scause.cause() {
         csr::Trap::Exception(csr::Exception::VirtualSupervisorEnvCall) => {
-            let a0 = vcpu.guest_cpu_state.gprs[10];
-            let a1 = vcpu.guest_cpu_state.gprs[11];
-            info!(
-                "[Hypervisor] VSuperEcall Reset: a0: {:#x}, a1: {:#x}",
-                a0, a1
-            );
-            info!("[Hypervisor] Shutdown vm normally!");
-            return true;
+            let a7 = vcpu.guest_cpu_state.gprs[17];
+            let ret = sbi::handle_sbi_call(vcpu);
+            vcpu.guest_cpu_state.gprs[10] = ret.error;
+            vcpu.guest_cpu_state.gprs[11] = ret.value;
+            vcpu.guest_cpu_state.sepc += 4;
+            if a7 == 8 {
+                info!("[Hypervisor] Shutdown vm normally!");
+                return true;
+            }
+            return false;
         }
         _ => {
             panic!("Unknown trap: {:?}", scause.cause());
