@@ -1,8 +1,8 @@
 [
     {
         "name": "hello-world-guest1",
-        "kernel": "hello-world",
-        "memory_limit": 1024,
+        "kernel": "rCore-Tutorial-v3",
+        "memory_limit": 10240000,
         "num_vcpu": 1
     }
 ]

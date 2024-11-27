@@ -19,4 +19,4 @@ qemu: $(HYPERVISOR_BIN)
 	@qemu-system-riscv64 -machine virt \
 			 -nographic \
 			 -bios $(BOOTLOADER) \
-			 -device loader,file=$(HYPERVISOR_BIN),addr=$(HYPERVISOR_ENTRY_PA) \
+			 -device loader,file=$(HYPERVISOR_BIN),addr=$(HYPERVISOR_ENTRY_PA)

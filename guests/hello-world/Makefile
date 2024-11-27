@@ -2,7 +2,7 @@ TARGET := hello-world
 TARGET_ELF := target/riscv64gc-unknown-none-elf/release/$(TARGET)
 TARGET_BIN := $(TARGET).bin
 
-all: $(TARGET_BIN) FORCE
+all: clean $(TARGET_BIN) FORCE
 
 $(TARGET_BIN): $(TARGET_ELF)
 	@rust-objcopy --binary-architecture=riscv64 --strip-all -O binary $< $@

@@ -72,13 +72,24 @@ fn vmexit_handler(vcpu: &mut VCpu) -> bool {
             let a7 = vcpu.guest_cpu_state.gprs[17];
             let ret = sbi::handle_sbi_call(vcpu);
             vcpu.guest_cpu_state.gprs[10] = ret.error;
-            vcpu.guest_cpu_state.gprs[11] = ret.value;
+            if a7 != 1 {
+                vcpu.guest_cpu_state.gprs[11] = ret.value;
+            }
             vcpu.guest_cpu_state.sepc += 4;
             if a7 == 8 {
                 info!("[Hypervisor] Shutdown vm normally!");
                 return true;
             }
             return false;
+        }
+        csr::Trap::Exception(csr::Exception::LoadGuestPageFault) => {
+            info!(
+                "LoadGuestPageFault: stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
+                riscv::register::stval::read(),
+                vcpu.guest_cpu_state.sepc,
+                csr::htval::read(),
+                csr::htinst::read(),
+            );
         }
         _ => {
             panic!("Unknown trap: {:?}", scause.cause());
