@@ -69,7 +69,7 @@ fn vmexit_handler(vcpu: &mut VCpu) -> bool {
 
     match scause.cause() {
         csr::Trap::Exception(csr::Exception::VirtualSupervisorEnvCall) => {
-            info!(
+            debug!(
                 "VirtualSupervisorEnvCall: stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
                 riscv::register::stval::read(),
                 vcpu.guest_cpu_state.sepc,
@@ -79,14 +79,14 @@ fn vmexit_handler(vcpu: &mut VCpu) -> bool {
             let a7 = vcpu.guest_cpu_state.gprs[17];
             sbi::handle_sbi_call(vcpu);
             vcpu.guest_cpu_state.sepc += 4;
-            if a7 == 8 {
+            if a7 == 8 || a7 == sbi_spec::srst::EID_SRST {
                 info!("[Hypervisor] Shutdown vm normally!");
                 return true;
             }
             return false;
         }
         csr::Trap::Exception(csr::Exception::LoadGuestPageFault) => {
-            info!(
+            debug!(
                 "LoadGuestPageFault: stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
                 riscv::register::stval::read(),
                 vcpu.guest_cpu_state.sepc,

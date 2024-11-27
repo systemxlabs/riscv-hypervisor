@@ -126,6 +126,7 @@ dependencies = [
  "log",
  "riscv",
  "sbi-rt",
+ "sbi-spec 0.0.8",
  "serde",
  "serde_derive",
  "serde_json",
@@ -161,7 +162,7 @@ version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7fbaa69be1eedc61c426e6d489b2260482e928b465360576900d52d496a58bd0"
 dependencies = [
- "sbi-spec",
+ "sbi-spec 0.0.7",
 ]
 
 [[package]]
@@ -169,6 +170,12 @@ name = "sbi-spec"
 version = "0.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e6e36312fb5ddc10d08ecdc65187402baba4ac34585cb9d1b78522ae2358d890"
+
+[[package]]
+name = "sbi-spec"
+version = "0.0.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8309630ab2b300d4fe52b6757e53a7cbb6672f55aa08b50e28b1952c06dd994d"
 
 [[package]]
 name = "scopeguard"
