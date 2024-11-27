@@ -69,6 +69,13 @@ fn vmexit_handler(vcpu: &mut VCpu) -> bool {
 
     match scause.cause() {
         csr::Trap::Exception(csr::Exception::VirtualSupervisorEnvCall) => {
+            info!(
+                "VirtualSupervisorEnvCall: stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
+                riscv::register::stval::read(),
+                vcpu.guest_cpu_state.sepc,
+                csr::htval::read(),
+                csr::htinst::read(),
+            );
             let a7 = vcpu.guest_cpu_state.gprs[17];
             sbi::handle_sbi_call(vcpu);
             vcpu.guest_cpu_state.sepc += 4;
