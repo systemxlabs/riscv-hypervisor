@@ -17,6 +17,10 @@ $(HYPERVISOR_BIN): elf
 
 qemu: $(HYPERVISOR_BIN)
 	@qemu-system-riscv64 -machine virt \
+			 -m 1G \
 			 -nographic \
 			 -bios $(BOOTLOADER) \
 			 -device loader,file=$(HYPERVISOR_BIN),addr=$(HYPERVISOR_ENTRY_PA)
+
+clean:
+	@cargo clean

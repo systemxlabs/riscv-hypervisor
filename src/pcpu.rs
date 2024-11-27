@@ -94,6 +94,17 @@ fn vmexit_handler(vcpu: &mut VCpu) -> bool {
                 csr::htinst::read(),
             );
         }
+        csr::Trap::Exception(csr::Exception::StoreGuestPageFault) => {
+            debug!(
+                "StoreGuestPageFault: stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
+                riscv::register::stval::read(),
+                vcpu.guest_cpu_state.sepc,
+                csr::htval::read(),
+                csr::htinst::read(),
+            );
+            vcpu.guest_cpu_state.sepc += 4;
+            return false;
+        }
         _ => {
             panic!("Unknown trap: {:?}", scause.cause());
         }

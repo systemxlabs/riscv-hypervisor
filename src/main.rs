@@ -72,6 +72,15 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     hstatus.set_spvp(true);
     hstatus.write();
 
+    let mut hedeleg = csr::Hedeleg::read();
+    hedeleg.set_env_call_from_u_or_vu(true);
+    hedeleg.set_load_page_fault(true);
+    hedeleg.set_store_page_fault(true);
+    hedeleg.set_illegal_inst(true);
+    hedeleg.set_inst_access_fault(true);
+    hedeleg.write();
+    info!("[HyperVisor] test hedeleg: {:?}", hedeleg);
+
     let pcpu = pcpu::this_cpu();
     pcpu.run();
 

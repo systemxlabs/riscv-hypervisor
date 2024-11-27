@@ -1,3 +1,4 @@
+mod hedeleg;
 mod hgatp;
 mod hstatus;
 pub mod htinst;
@@ -6,6 +7,7 @@ mod scause;
 mod sstatus;
 mod vsstatus;
 
+pub use hedeleg::*;
 pub use hgatp::*;
 pub use hstatus::*;
 pub use scause::*;
