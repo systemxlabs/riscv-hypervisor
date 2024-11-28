@@ -115,6 +115,19 @@ fn vmexit_handler(vcpu: &mut VCpu) -> bool {
             );
             todo!()
         }
+        // csr::Trap::Interrupt(csr::Interrupt::SupervisorTimer) => {
+        //     // debug!(
+        //     //     "SupervisorTimer: stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
+        //     //     riscv::register::stval::read(),
+        //     //     vcpu.guest_cpu_state.sepc,
+        //     //     csr::htval::read(),
+        //     //     csr::htinst::read(),
+        //     // );
+        //     // let mut hvip = csr::Hvip::read();
+        //     // hvip.set_vs_timer_interrupt(true);
+        //     // hvip.write();
+        //     return false;
+        // }
         _ => {
             panic!(
                 "Unknown trap: {:?}, stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",

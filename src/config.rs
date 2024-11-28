@@ -9,9 +9,11 @@ pub const PCPU_STACK_SIZE: usize = 4 * PAGE_SIZE_4K;
 
 /// MMIO regions with format (`base_paddr`, `size`).
 pub const MMIO_REGIONS: &[(usize, usize)] = &[
-    (0x0c00_0000, 0x21_0000),
-    (0x1000_0000, 0x1000),
-    (0x1000_1000, 0x8000),
-    (0x3000_0000, 0x1000_0000),
-    (0x4000_0000, 0x4000_0000),
+    (0x0010_0000, 0x00_2000), // VIRT_TEST/RTC  in virt machine
+    // (0x0c00_0000, 0x21_0000),
+    // (0x1000_0000, 0x1000),
+    // virtio
+    (0x1000_1000, 0x1000),
+    // (0x3000_0000, 0x1000_0000),
+    // (0x4000_0000, 0x4000_0000),
 ];

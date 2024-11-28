@@ -21,7 +21,9 @@ qemu: $(HYPERVISOR_BIN)
 			-m 1G \
 			-nographic \
 			-bios $(BOOTLOADER) \
-			-device loader,file=$(HYPERVISOR_BIN),addr=$(HYPERVISOR_ENTRY_PA)
+			-device loader,file=$(HYPERVISOR_BIN),addr=$(HYPERVISOR_ENTRY_PA) \
+			-drive file=guests/rCore-Tutorial-v3/fs.img,if=none,format=raw,id=x0 \
+			-device virtio-blk-device,drive=x0,bus=virtio-mmio-bus.0
 
 clean:
 	@cargo clean

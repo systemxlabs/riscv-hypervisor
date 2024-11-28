@@ -9,7 +9,7 @@ use log::debug;
 use spin::{Mutex, Once};
 
 use crate::mem::{align_down, align_up, GuestPageTable, GuestPhysAddr, PTEFlags};
-use crate::vm::{config, kernel_image, VMConfig};
+use crate::vm::{kernel_image, vconfig, VMConfig};
 
 use super::VCpu;
 
@@ -17,7 +17,7 @@ pub static GLOBAL_VMS: Once<Vec<VM>> = Once::new();
 pub static VM_ID_GENERATOR: AtomicUsize = AtomicUsize::new(0);
 
 pub fn init_vms() {
-    let vm_configs = config::vm_configs();
+    let vm_configs = vconfig::vm_configs();
     let mut vms = Vec::new();
     for vm_config in vm_configs {
         let vm = VM::new(vm_config).expect("Failed to create VM");
@@ -111,6 +111,21 @@ pub fn init_guest_page_table(vm_config: &VMConfig) -> HypervisorResult<GuestPage
     }
 
     // TODO map mmio
+    // guest_page_table.map_region(
+    //     0x1000_0000.into(),
+    //     0x1000_0000.into(),
+    //     1,
+    //     PTEFlags::R | PTEFlags::W | PTEFlags::V,
+    // )?;
+    for mmio in crate::config::MMIO_REGIONS {
+        let aligned_size = align_up(mmio.1, PAGE_SIZE_4K);
+        guest_page_table.map_region(
+            mmio.0.into(),
+            mmio.0.into(),
+            aligned_size / PAGE_SIZE_4K,
+            PTEFlags::R | PTEFlags::W | PTEFlags::X | PTEFlags::V | PTEFlags::U,
+        )?;
+    }
 
     assert_eq!(
         guest_page_table.query_page(guest_memory_base).unwrap(),
