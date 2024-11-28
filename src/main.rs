@@ -81,6 +81,12 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     hedeleg.write();
     debug!("[HyperVisor] hedeleg: {:?}", csr::Hedeleg::read());
 
+    // let mut hideleg = csr::Hideleg::read();
+    // hideleg.set_vs_timer_interrupt(true);
+    // hideleg.set_vs_external_interrupt(true);
+    // hideleg.write();
+    // debug!("[HyperVisor] hideleg: {:?}", csr::Hideleg::read());
+
     let pcpu = pcpu::this_cpu();
     pcpu.run();
 

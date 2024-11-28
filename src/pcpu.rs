@@ -105,8 +105,25 @@ fn vmexit_handler(vcpu: &mut VCpu) -> bool {
             vcpu.guest_cpu_state.sepc += 4;
             return false;
         }
+        csr::Trap::Exception(csr::Exception::VirtualInstruction) => {
+            info!(
+                "VirtualInstruction: stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
+                riscv::register::stval::read(),
+                vcpu.guest_cpu_state.sepc,
+                csr::htval::read(),
+                csr::htinst::read(),
+            );
+            todo!()
+        }
         _ => {
-            panic!("Unknown trap: {:?}", scause.cause());
+            panic!(
+                "Unknown trap: {:?}, stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
+                scause.cause(),
+                riscv::register::stval::read(),
+                vcpu.guest_cpu_state.sepc,
+                csr::htval::read(),
+                csr::htinst::read(),
+            );
         }
     }
     true

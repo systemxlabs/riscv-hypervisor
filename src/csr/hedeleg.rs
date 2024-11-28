@@ -82,6 +82,15 @@ impl Hedeleg {
     pub fn set_store_page_fault(&mut self, val: bool) {
         self.bits.set_bit(15, val);
     }
+
+    #[inline]
+    pub fn virtual_inst(&self) -> bool {
+        self.bits.get_bit(22)
+    }
+    #[inline]
+    pub fn set_virtual_inst(&mut self, val: bool) {
+        self.bits.set_bit(22, val);
+    }
 }
 
 mod private {
