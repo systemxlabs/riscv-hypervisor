@@ -66,26 +66,7 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     vm::init_vms();
     vm::bind_vcpus();
 
-    let mut hstatus = csr::Hstatus::read();
-    hstatus.set_spv(true);
-    hstatus.set_spvp(true);
-    hstatus.write();
-    debug!("[HyperVisor] hstatus: {:?}", csr::Hstatus::read());
-
-    let mut hedeleg = csr::Hedeleg::read();
-    hedeleg.set_env_call_from_u_or_vu(true);
-    hedeleg.set_load_page_fault(true);
-    hedeleg.set_store_page_fault(true);
-    hedeleg.set_illegal_inst(true);
-    hedeleg.set_inst_access_fault(true);
-    hedeleg.write();
-    debug!("[HyperVisor] hedeleg: {:?}", csr::Hedeleg::read());
-
-    // let mut hideleg = csr::Hideleg::read();
-    // hideleg.set_vs_timer_interrupt(true);
-    // hideleg.set_vs_external_interrupt(true);
-    // hideleg.write();
-    // debug!("[HyperVisor] hideleg: {:?}", csr::Hideleg::read());
+    csr::init_csrs();
 
     let pcpu = pcpu::this_cpu();
     pcpu.run();

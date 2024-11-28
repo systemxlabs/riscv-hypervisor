@@ -1,3 +1,4 @@
+mod hcounteren;
 mod hedeleg;
 mod hgatp;
 mod hideleg;
@@ -8,6 +9,7 @@ mod scause;
 mod sstatus;
 mod vsstatus;
 
+pub use hcounteren::*;
 pub use hedeleg::*;
 pub use hgatp::*;
 pub use hideleg::*;
@@ -24,4 +26,23 @@ pub fn init_csrs() {
     hstatus.set_spvp(true);
     hstatus.write();
     debug!("[HyperVisor] hstatus: {:?}", Hstatus::read());
+
+    let mut hedeleg = Hedeleg::read();
+    hedeleg.set_env_call_from_u_or_vu(true);
+    hedeleg.set_load_page_fault(true);
+    hedeleg.set_store_page_fault(true);
+    hedeleg.set_illegal_inst(true);
+    hedeleg.set_inst_access_fault(true);
+    hedeleg.write();
+    debug!("[HyperVisor] hedeleg: {:?}", Hedeleg::read());
+
+    let mut hideleg = Hideleg::read();
+    hideleg.set_vs_timer_interrupt(true);
+    hideleg.set_vs_external_interrupt(true);
+    hideleg.write();
+    debug!("[HyperVisor] hideleg: {:?}", Hideleg::read());
+
+    // let hcounteren = Hcounteren::from_bits(0xffff_ffff);
+    // hcounteren.write();
+    // debug!("[HyperVisor] hcounteren: {:?}", Hcounteren::read());
 }
