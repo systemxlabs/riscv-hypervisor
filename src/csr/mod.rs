@@ -42,7 +42,7 @@ pub fn init_csrs() {
     hideleg.write();
     debug!("[HyperVisor] hideleg: {:?}", Hideleg::read());
 
-    // let hcounteren = Hcounteren::from_bits(0xffff_ffff);
-    // hcounteren.write();
-    // debug!("[HyperVisor] hcounteren: {:?}", Hcounteren::read());
+    let hcounteren = Hcounteren::from_bits(0xffff_ffff);
+    hcounteren.write();
+    debug!("[HyperVisor] hcounteren: {:?}", Hcounteren::read());
 }

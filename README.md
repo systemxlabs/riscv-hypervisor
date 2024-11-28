@@ -17,4 +17,5 @@ cargo install cargo-binutils
 3.Install qemu
 ```bash
 brew install qemu
+apt install qemu-system-riscv64
 ```

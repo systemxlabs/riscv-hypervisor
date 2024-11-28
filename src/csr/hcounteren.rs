@@ -57,6 +57,6 @@ mod private {
     use super::Hcounteren;
     use riscv::{read_csr_as, write_csr_as};
 
-    read_csr_as!(Hcounteren, 3602);
-    write_csr_as!(Hcounteren, 3602);
+    read_csr_as!(Hcounteren, 1542);
+    write_csr_as!(Hcounteren, 1542);
 }
