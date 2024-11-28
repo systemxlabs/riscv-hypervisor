@@ -12,6 +12,7 @@ pub fn handle_sbi_call(vcpu: &mut VCpu) {
     );
     match a7 {
         sbi_spec::legacy::LEGACY_CONSOLE_PUTCHAR => handle_console_putchar(vcpu, a0),
+        sbi_spec::legacy::LEGACY_CONSOLE_GETCHAR => handle_console_getchar(vcpu),
         sbi_spec::legacy::LEGACY_SHUTDOWN => handle_shutdown(vcpu),
         sbi_spec::srst::EID_SRST => handle_reset(vcpu),
         sbi_spec::time::EID_TIME => handle_time(vcpu),
@@ -21,6 +22,11 @@ pub fn handle_sbi_call(vcpu: &mut VCpu) {
 
 fn handle_console_putchar(vcpu: &mut VCpu, c: usize) {
     let ret = sbi_rt::legacy::console_putchar(c);
+    vcpu.guest_cpu_state.gprs[10] = ret;
+}
+
+fn handle_console_getchar(vcpu: &mut VCpu) {
+    let ret = sbi_rt::legacy::console_getchar();
     vcpu.guest_cpu_state.gprs[10] = ret;
 }
 
