@@ -105,29 +105,23 @@ fn vmexit_handler(vcpu: &mut VCpu) -> bool {
             vcpu.guest_cpu_state.sepc += 4;
             return false;
         }
-        csr::Trap::Exception(csr::Exception::VirtualInstruction) => {
-            info!(
-                "VirtualInstruction: stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
+        csr::Trap::Interrupt(csr::Interrupt::SupervisorTimer) => {
+            debug!(
+                "SupervisorTimer: stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
                 riscv::register::stval::read(),
                 vcpu.guest_cpu_state.sepc,
                 csr::htval::read(),
                 csr::htinst::read(),
             );
-            todo!()
+            let mut hvip = csr::Hvip::read();
+            hvip.set_vs_timer_interrupt(true);
+            hvip.write();
+            unsafe {
+                riscv::register::sie::clear_stimer();
+            }
+            // vcpu.guest_cpu_state.sepc += 4;
+            return false;
         }
-        // csr::Trap::Interrupt(csr::Interrupt::SupervisorTimer) => {
-        //     // debug!(
-        //     //     "SupervisorTimer: stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
-        //     //     riscv::register::stval::read(),
-        //     //     vcpu.guest_cpu_state.sepc,
-        //     //     csr::htval::read(),
-        //     //     csr::htinst::read(),
-        //     // );
-        //     // let mut hvip = csr::Hvip::read();
-        //     // hvip.set_vs_timer_interrupt(true);
-        //     // hvip.write();
-        //     return false;
-        // }
         _ => {
             panic!(
                 "Unknown trap: {:?}, stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",

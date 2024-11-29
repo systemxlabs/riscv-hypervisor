@@ -48,17 +48,17 @@ pub fn init_csrs() {
     hcounteren.write();
     debug!("[HyperVisor] hcounteren: {:?}", Hcounteren::read());
 
-    // let mut hvip = Hvip::read();
-    // hvip.set_vs_external_interrupt(false);
-    // hvip.set_vs_software_interrupt(false);
-    // hvip.set_vs_timer_interrupt(false);
-    // hvip.write();
-    // debug!("[Hypervisor] hvip: {:?}", Hvip::read());
+    let mut hvip = Hvip::read();
+    hvip.set_vs_external_interrupt(false);
+    hvip.set_vs_software_interrupt(false);
+    hvip.set_vs_timer_interrupt(false);
+    hvip.write();
+    debug!("[Hypervisor] hvip: {:?}", Hvip::read());
 
     unsafe {
-        riscv::register::sie::set_sext();
-        riscv::register::sie::set_ssoft();
+        //     riscv::register::sie::set_sext();
+        //     riscv::register::sie::set_ssoft();
         riscv::register::sie::set_stimer();
-        debug!("[Hypervisor] sie: {:?}", riscv::register::sie::read());
+        //     debug!("[Hypervisor] sie: {:?}", riscv::register::sie::read());
     }
 }

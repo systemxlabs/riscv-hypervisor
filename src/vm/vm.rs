@@ -111,12 +111,6 @@ pub fn init_guest_page_table(vm_config: &VMConfig) -> HypervisorResult<GuestPage
     }
 
     // TODO map mmio
-    // guest_page_table.map_region(
-    //     0x1000_0000.into(),
-    //     0x1000_0000.into(),
-    //     1,
-    //     PTEFlags::R | PTEFlags::W | PTEFlags::V,
-    // )?;
     for mmio in crate::config::MMIO_REGIONS {
         let aligned_size = align_up(mmio.1, PAGE_SIZE_4K);
         guest_page_table.map_region(
