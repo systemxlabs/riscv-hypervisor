@@ -3,6 +3,7 @@ use core::sync::atomic::AtomicBool;
 use crate::{
     allocator::frame::PHYS_FRAME_ALLOCATOR,
     config::PAGE_SIZE_4K,
+    dtb::MachineMeta,
     error::{HypervisorError, HypervisorResult},
     mem::addr::HostPhysAddr,
 };
@@ -12,7 +13,7 @@ use spin::Mutex;
 
 use super::{
     addr::HostVirtAddr,
-    map_free_memory, map_hypervisor_image,
+    map_free_memory, map_hypervisor_image, map_mmio_regions,
     pte::{PTEFlags, PageTableEntry},
 };
 
@@ -21,9 +22,10 @@ const SV39_TABLE_PTE_COUNT: usize = 512;
 pub static HYPERVISOR_PAGE_TABLE: Mutex<PageTable> = Mutex::new(PageTable::empty());
 pub static HYPERVISOR_PAGE_TABLE_INITED: AtomicBool = AtomicBool::new(false);
 
-pub fn init_hypervisor_page_table() {
+pub fn init_hypervisor_page_table(meta: &MachineMeta) {
     let page_table = PageTable::try_new().expect("Failed to create page table");
     *HYPERVISOR_PAGE_TABLE.lock() = page_table;
+    map_mmio_regions(meta);
     map_hypervisor_image();
     map_free_memory();
     // HYPERVISOR_PAGE_TABLE_INITED.store(true, core::sync::atomic::Ordering::SeqCst);

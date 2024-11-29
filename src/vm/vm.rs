@@ -2,6 +2,7 @@ use core::sync::atomic::AtomicUsize;
 
 use crate::allocator::PHYS_FRAME_ALLOCATOR;
 use crate::config::PAGE_SIZE_4K;
+use crate::dtb::MachineMeta;
 use crate::error::HypervisorResult;
 use crate::pcpu::GLOBAL_PCPUS;
 use alloc::vec::Vec;
@@ -16,11 +17,11 @@ use super::VCpu;
 pub static GLOBAL_VMS: Once<Vec<VM>> = Once::new();
 pub static VM_ID_GENERATOR: AtomicUsize = AtomicUsize::new(0);
 
-pub fn init_vms() {
+pub fn init_vms(meta: &MachineMeta) {
     let vm_configs = vconfig::vm_configs();
     let mut vms = Vec::new();
     for vm_config in vm_configs {
-        let vm = VM::new(vm_config).expect("Failed to create VM");
+        let vm = VM::new(vm_config, meta).expect("Failed to create VM");
         vms.push(vm);
     }
     GLOBAL_VMS.call_once(|| vms);
@@ -64,9 +65,9 @@ pub struct VM {
 }
 
 impl VM {
-    pub fn new(vm_config: VMConfig) -> HypervisorResult<Self> {
+    pub fn new(vm_config: VMConfig, meta: &MachineMeta) -> HypervisorResult<Self> {
         let kernel_image = kernel_image(vm_config.kernel.as_str());
-        let guest_page_table = init_guest_page_table(&vm_config)?;
+        let guest_page_table = init_guest_page_table(&vm_config, meta)?;
         let mut vcpus = Vec::new();
         for _ in 0..vm_config.num_vcpu {
             vcpus.push(Mutex::new(VCpu::new()));
@@ -82,7 +83,10 @@ impl VM {
     }
 }
 
-pub fn init_guest_page_table(vm_config: &VMConfig) -> HypervisorResult<GuestPageTable> {
+pub fn init_guest_page_table(
+    vm_config: &VMConfig,
+    meta: &MachineMeta,
+) -> HypervisorResult<GuestPageTable> {
     let mut guest_page_table = GuestPageTable::try_new()?;
 
     let guest_memory_base: GuestPhysAddr = 0x8020_0000.into();
@@ -110,14 +114,14 @@ pub fn init_guest_page_table(vm_config: &VMConfig) -> HypervisorResult<GuestPage
         );
     }
 
-    // TODO map mmio
-    for mmio in crate::config::MMIO_REGIONS {
-        let aligned_size = align_up(mmio.1, PAGE_SIZE_4K);
+    // map mmio
+    for virt_dev in meta.virtio.iter() {
+        let pte_flags = PTEFlags::V | PTEFlags::R | PTEFlags::W | PTEFlags::U | PTEFlags::X;
         guest_page_table.map_region(
-            mmio.0.into(),
-            mmio.0.into(),
-            aligned_size / PAGE_SIZE_4K,
-            PTEFlags::R | PTEFlags::W | PTEFlags::X | PTEFlags::V | PTEFlags::U,
+            virt_dev.base_address.into(),
+            virt_dev.base_address.into(),
+            virt_dev.size / PAGE_SIZE_4K,
+            pte_flags,
         )?;
     }
 

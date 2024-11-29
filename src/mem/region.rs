@@ -1,8 +1,34 @@
 use crate::config::{PAGE_SIZE_4K, PHYS_MEMORY_END};
+use crate::dtb::MachineMeta;
 use crate::mem::addr::{align_down, align_up};
 use crate::mem::page_table::HYPERVISOR_PAGE_TABLE;
 use crate::mem::pte::PTEFlags;
 use log::{debug, info};
+
+pub fn map_mmio_regions(meta: &MachineMeta) {
+    for virt_dev in meta.virtio.iter() {
+        let pte_flags = PTEFlags::V | PTEFlags::R | PTEFlags::W;
+        info!(
+            "[Hypervisor] map region mmio: [{:#x}, {:#x}) -> [{:#x}, {:#x}) {:?}",
+            virt_dev.base_address,
+            virt_dev.base_address + virt_dev.size,
+            virt_dev.base_address,
+            virt_dev.base_address + virt_dev.size,
+            pte_flags
+        );
+        assert_eq!(virt_dev.base_address % PAGE_SIZE_4K, 0);
+        assert_eq!(virt_dev.size % PAGE_SIZE_4K, 0);
+        HYPERVISOR_PAGE_TABLE
+            .lock()
+            .map_region(
+                virt_dev.base_address.into(),
+                virt_dev.base_address.into(),
+                virt_dev.size / PAGE_SIZE_4K,
+                pte_flags,
+            )
+            .expect("should work fine");
+    }
+}
 
 pub fn map_hypervisor_image() {
     extern "C" {

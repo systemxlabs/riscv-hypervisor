@@ -60,14 +60,13 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     allocator::init_frame_allocator();
     allocator::init_heap_allocator();
 
-    mem::init_hypervisor_page_table();
-
+    mem::init_hypervisor_page_table(&machine_meta);
     mem::enable_mmu();
     allocator::heap_test();
 
     pcpu::init_pcpus(hart_id);
 
-    vm::init_vms();
+    vm::init_vms(&machine_meta);
     vm::bind_vcpus();
 
     csr::init_csrs();
