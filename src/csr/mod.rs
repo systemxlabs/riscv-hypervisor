@@ -56,7 +56,7 @@ pub fn init_csrs() {
     debug!("[Hypervisor] hvip: {:?}", Hvip::read());
 
     unsafe {
-        //     riscv::register::sie::set_sext();
+        riscv::register::sie::set_sext();
         //     riscv::register::sie::set_ssoft();
         riscv::register::sie::set_stimer();
         //     debug!("[Hypervisor] sie: {:?}", riscv::register::sie::read());

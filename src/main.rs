@@ -9,6 +9,7 @@ mod allocator;
 mod config;
 mod console;
 mod csr;
+mod dtb;
 mod error;
 mod lang_items;
 mod logging;
@@ -52,6 +53,9 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     if sbi_rt::probe_extension(sbi_rt::Hsm).is_unavailable() {
         panic!("no HSM extension exist on current SBI environment");
     }
+
+    let machine_meta = dtb::MachineMeta::parse(dtb);
+    info!("[HyperVisor] machine meta: {:#x?}", machine_meta);
 
     allocator::init_frame_allocator();
     allocator::init_heap_allocator();

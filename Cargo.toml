@@ -16,6 +16,8 @@ riscv = "0.12.1"
 serde = { version = "1.0", default-features = false, features = ["alloc"] }
 serde_derive = "1.0"
 serde_json = { version = "1.0", default-features = false, features = ["alloc"] }
+fdt = { version = "0.1.5", features = ["pretty-printing"] }
+arrayvec = { version = "0.7.6", default-features = false }
 
 [profile.release]
 debug = true

@@ -1,4 +1,3 @@
-use crate::vm::vconfig;
 use alloc::{string::String, vec::Vec};
 use log::{debug, info};
 use serde_derive::Deserialize;
