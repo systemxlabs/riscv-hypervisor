@@ -1,4 +1,4 @@
-use crate::config::{PAGE_SIZE_4K, PHYS_MEMORY_END};
+use crate::config::PAGE_SIZE_4K;
 use crate::dtb::MachineMeta;
 use crate::mem::addr::{align_down, align_up};
 use crate::mem::page_table::HYPERVISOR_PAGE_TABLE;
@@ -146,12 +146,13 @@ pub fn map_hypervisor_image() {
     );
 }
 
-pub fn map_free_memory() {
+pub fn map_free_memory(meta: &MachineMeta) {
     extern "C" {
         fn ehypervisor();
     }
     let free_mem_start = align_up(ehypervisor as usize, PAGE_SIZE_4K);
-    let free_mem_end = align_down(PHYS_MEMORY_END, PAGE_SIZE_4K);
+    let phys_mem_end = meta.phys_memory_offset + meta.phys_memory_size;
+    let free_mem_end = align_down(phys_mem_end, PAGE_SIZE_4K);
     assert_eq!(free_mem_start % PAGE_SIZE_4K, 0);
     assert_eq!(free_mem_end % PAGE_SIZE_4K, 0);
     let pte_flags = PTEFlags::V | PTEFlags::R | PTEFlags::W;

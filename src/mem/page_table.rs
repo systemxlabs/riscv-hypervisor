@@ -27,7 +27,7 @@ pub fn init_hypervisor_page_table(meta: &MachineMeta) {
     *HYPERVISOR_PAGE_TABLE.lock() = page_table;
     map_mmio_regions(meta);
     map_hypervisor_image();
-    map_free_memory();
+    map_free_memory(meta);
     // HYPERVISOR_PAGE_TABLE_INITED.store(true, core::sync::atomic::Ordering::SeqCst);
 }
 

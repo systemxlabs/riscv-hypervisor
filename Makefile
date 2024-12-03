@@ -17,6 +17,8 @@ $(HYPERVISOR_BIN): elf
 
 qemu: $(HYPERVISOR_BIN)
 	@qemu-system-riscv64 \
+	        -d int,guest_errors \
+	        -D /tmp/qemu.log \
 			-machine virt \
 			-m 1G \
 			-nographic \
