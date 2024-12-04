@@ -20,10 +20,13 @@ pub static VM_ID_GENERATOR: AtomicUsize = AtomicUsize::new(0);
 pub fn init_vms(meta: &MachineMeta) {
     let vm_configs = vconfig::vm_configs();
     let mut vms = Vec::new();
-    for vm_config in vm_configs {
-        let vm = VM::new(vm_config, meta).expect("Failed to create VM");
-        vms.push(vm);
-    }
+    let vm_config = vm_configs.get(0).unwrap();
+    let vm = VM::new(vm_config.clone(), meta).expect("Failed to create VM");
+    vms.push(vm);
+    // for vm_config in vm_configs {
+    //     let vm = VM::new(vm_config, meta).expect("Failed to create VM");
+    //     vms.push(vm);
+    // }
     GLOBAL_VMS.call_once(|| vms);
 }
 

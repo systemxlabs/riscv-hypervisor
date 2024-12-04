@@ -44,12 +44,6 @@ pub fn vm_configs() -> Vec<VMConfig> {
     }
     info!("[Hypervisor] Parsed VM configs: {:#x?}", vm_configs);
 
-    debug!(
-        "Guest rCore-tutorial-v3 bin: [{:#x}, {:#x}) {}bytes",
-        GUEST_RCORE_TUTORIAL_V3_BIN.as_ptr() as usize,
-        GUEST_RCORE_TUTORIAL_V3_BIN.as_ptr() as usize + GUEST_RCORE_TUTORIAL_V3_BIN.len(),
-        GUEST_RCORE_TUTORIAL_V3_BIN.len()
-    );
     vm_configs
 }
 
@@ -65,18 +59,55 @@ fn parse_memory_limit(size_str: &str) -> usize {
     }
 }
 
-static GUEST_RCORE_TUTORIAL_V3_BIN: [u8; include_bytes!("../../guests/rCore-Tutorial-v3/os.bin")
-    .len()] = *include_bytes!("../../guests/rCore-Tutorial-v3/os.bin");
-
 static GUEST_HELLO_WORLD_BIN: [u8; include_bytes!("../../guests/hello-world/hello-world.bin")
     .len()] = *include_bytes!("../../guests/hello-world/hello-world.bin");
 
+static GUEST_RCORE_TUTORIAL_V3_CH1_BIN: [u8; include_bytes!(
+    "../../guests/rCore-Tutorial-v3/os-ch1.bin"
+)
+.len()] = *include_bytes!("../../guests/rCore-Tutorial-v3/os-ch1.bin");
+static GUEST_RCORE_TUTORIAL_V3_CH2_BIN: [u8; include_bytes!(
+    "../../guests/rCore-Tutorial-v3/os-ch2.bin"
+)
+.len()] = *include_bytes!("../../guests/rCore-Tutorial-v3/os-ch2.bin");
+static GUEST_RCORE_TUTORIAL_V3_CH3_BIN: [u8; include_bytes!(
+    "../../guests/rCore-Tutorial-v3/os-ch3.bin"
+)
+.len()] = *include_bytes!("../../guests/rCore-Tutorial-v3/os-ch3.bin");
+static GUEST_RCORE_TUTORIAL_V3_CH4_BIN: [u8; include_bytes!(
+    "../../guests/rCore-Tutorial-v3/os-ch4.bin"
+)
+.len()] = *include_bytes!("../../guests/rCore-Tutorial-v3/os-ch4.bin");
+static GUEST_RCORE_TUTORIAL_V3_CH5_BIN: [u8; include_bytes!(
+    "../../guests/rCore-Tutorial-v3/os-ch5.bin"
+)
+.len()] = *include_bytes!("../../guests/rCore-Tutorial-v3/os-ch5.bin");
+static GUEST_RCORE_TUTORIAL_V3_CH6_BIN: [u8; include_bytes!(
+    "../../guests/rCore-Tutorial-v3/os-ch6.bin"
+)
+.len()] = *include_bytes!("../../guests/rCore-Tutorial-v3/os-ch6.bin");
+
 pub fn kernel_image(kernel: &str) -> &'static [u8] {
-    if kernel.eq_ignore_ascii_case("rCore-Tutorial-v3") {
-        return GUEST_RCORE_TUTORIAL_V3_BIN.as_ref();
-    }
     if kernel.eq_ignore_ascii_case("hello-world") {
         return GUEST_HELLO_WORLD_BIN.as_ref();
+    }
+    if kernel.eq_ignore_ascii_case("rCore-Tutorial-v3-ch1") {
+        return GUEST_RCORE_TUTORIAL_V3_CH1_BIN.as_ref();
+    }
+    if kernel.eq_ignore_ascii_case("rCore-Tutorial-v3-ch2") {
+        return GUEST_RCORE_TUTORIAL_V3_CH2_BIN.as_ref();
+    }
+    if kernel.eq_ignore_ascii_case("rCore-Tutorial-v3-ch3") {
+        return GUEST_RCORE_TUTORIAL_V3_CH3_BIN.as_ref();
+    }
+    if kernel.eq_ignore_ascii_case("rCore-Tutorial-v3-ch4") {
+        return GUEST_RCORE_TUTORIAL_V3_CH4_BIN.as_ref();
+    }
+    if kernel.eq_ignore_ascii_case("rCore-Tutorial-v3-ch5") {
+        return GUEST_RCORE_TUTORIAL_V3_CH5_BIN.as_ref();
+    }
+    if kernel.eq_ignore_ascii_case("rCore-Tutorial-v3-ch6") {
+        return GUEST_RCORE_TUTORIAL_V3_CH6_BIN.as_ref();
     }
     panic!("Unsupported kernel: {}", kernel)
 }

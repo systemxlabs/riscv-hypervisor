@@ -1,9 +1,16 @@
 [
     {
-        "name": "hello-world-guest1",
-        "kernel": "rCore-Tutorial-v3",
+        "name": "rcore-guest6",
+        "kernel": "rCore-Tutorial-v3-ch6",
         "memory_limit": "1G",
         "num_vcpu": 1,
         "entry": "0xc0200000"
+    },
+    {
+        "name": "rcore-guest1",
+        "kernel": "rCore-Tutorial-v3-ch1",
+        "memory_limit": "1G",
+        "num_vcpu": 1,
+        "entry": "0x80200000"
     }
 ]
