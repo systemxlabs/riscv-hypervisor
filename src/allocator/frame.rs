@@ -1,4 +1,5 @@
 use bitmap_allocator::BitAlloc;
+use log::info;
 
 use crate::{
     config::PAGE_SIZE_4K,
@@ -73,6 +74,14 @@ impl PhysFrameAllocator {
         self.used_frames -= num_frames;
         self.inner
             .dealloc((pos.as_usize() - self.base) / PAGE_SIZE_4K)
+    }
+
+    pub fn alloc_range(&mut self, start: HostPhysAddr, num_frames: usize) {
+        assert_eq!(start.as_usize() % PAGE_SIZE_4K, 0);
+        assert!(start.as_usize() >= self.base);
+        let start = (start.as_usize() - self.base) / PAGE_SIZE_4K;
+        let end = start + num_frames;
+        self.inner.remove(start..end);
     }
 
     pub fn total_frames(&self) -> usize {

@@ -1,6 +1,8 @@
 # riscv-hypervisor
 - [ ] CPU virtualization
-- [ ] Memory virtualization (two-stage address translation)
+- [x] Memory virtualization (two-stage address translation)
+- [x] Handle sbi calls
+- [x] Parsing device tree
 - [ ] Multi-core support
 - [ ] Multi-guest support
 - [ ] IOMMU enabled
