@@ -112,6 +112,7 @@ pub fn init_guest_page_table(
             kernel_entry_paddr.as_usize() as *mut u8,
             kernel_image.len(),
         );
+        core::arch::asm!("fence.i");
     }
 
     // map mmio

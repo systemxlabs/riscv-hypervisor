@@ -53,6 +53,7 @@ impl PCpu {
     }
 }
 
+#[no_mangle]
 fn run_vcpu(vcpu: &mut VCpu) -> bool {
     unsafe {
         _vm_entry(vcpu);

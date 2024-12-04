@@ -17,6 +17,7 @@ mod mem;
 mod pcpu;
 mod sbi;
 mod vm;
+mod trap;
 
 use crate::config::BOOT_STACK_SIZE;
 use log::{debug, info};
@@ -46,6 +47,7 @@ pub unsafe extern "C" fn start() -> ! {
 pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     clear_bss();
     logging::init();
+    trap::set_hypervisor_trap_entry();
     info!("[Hypervisor] Hello, world!");
     info!("[HyperVisor] hart_id: {}, dtb: {:#x}", hart_id, dtb);
 
