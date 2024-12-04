@@ -32,7 +32,7 @@ gdbserver: $(HYPERVISOR_BIN)
 	@qemu-system-riscv64 $(QEMU_ARGS) -s -S
 
 gdbclient:
-	@riscv64-unknown-elf-gdb -ex 'file $(KERNEL_ELF)' -ex 'set arch riscv:rv64' -ex 'target remote localhost:1234'
+	@riscv64-unknown-elf-gdb -ex 'file $(HYPERVISOR_ELF)' -ex 'set arch riscv:rv64' -ex 'target remote localhost:1234'
 
 clean:
 	@cargo clean

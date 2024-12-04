@@ -3,15 +3,17 @@ use log::info;
 use crate::config::PAGE_SIZE_4K;
 
 // TODO this is a temporary solution
-static TRAP_STACK: [u8; 10*PAGE_SIZE_4K] = [0u8; 10*PAGE_SIZE_4K];
+static TRAP_STACK: [u8; 10 * PAGE_SIZE_4K] = [0u8; 10 * PAGE_SIZE_4K];
 
 pub fn set_hypervisor_trap_entry() {
     unsafe {
-        riscv::register::stvec::write(_trap_vector_base as usize, riscv::register::stvec::TrapMode::Direct);
+        riscv::register::stvec::write(
+            _trap_vector_base as usize,
+            riscv::register::stvec::TrapMode::Direct,
+        );
         riscv::register::sscratch::write(TRAP_STACK.as_ptr() as usize + TRAP_STACK.len());
     }
 }
-
 
 #[naked]
 #[no_mangle]
@@ -103,7 +105,7 @@ pub unsafe extern "C" fn _trap_vector_base() -> ! {
 
 #[no_mangle]
 pub fn trap_handler(tf: &mut TrapFrame) {
-    info!("trap_handler");
+    panic!("trap_handler");
 }
 
 /// General registers of RISC-V.

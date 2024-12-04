@@ -10,7 +10,7 @@ use log::debug;
 use spin::{Mutex, Once};
 
 use crate::mem::{align_down, align_up, GuestPageTable, GuestPhysAddr, PTEFlags};
-use crate::vm::{kernel_image, vconfig, VMConfig};
+use crate::vm::{self, kernel_image, vconfig, VMConfig};
 
 use super::VCpu;
 
@@ -78,7 +78,7 @@ impl VM {
             guest_page_table,
             kernel_image,
             memory_limit: vm_config.memory_limit,
-            entry: 0x8020_0000.into(),
+            entry: vm_config.entry.into(),
         })
     }
 }
@@ -89,7 +89,7 @@ pub fn init_guest_page_table(
 ) -> HypervisorResult<GuestPageTable> {
     let mut guest_page_table = GuestPageTable::try_new()?;
 
-    let guest_memory_base: GuestPhysAddr = 0x8020_0000.into();
+    let guest_memory_base: GuestPhysAddr = align_down(vm_config.entry, PAGE_SIZE_4K).into();
     let guest_memory_size = align_up(vm_config.memory_limit, PAGE_SIZE_4K);
     let paddr = PHYS_FRAME_ALLOCATOR
         .lock()
@@ -103,7 +103,7 @@ pub fn init_guest_page_table(
     )?;
 
     // copy kernel image to guest memory
-    let kernel_entry: GuestPhysAddr = 0x8020_0000.into();
+    let kernel_entry: GuestPhysAddr = vm_config.entry.into();
     let kernel_entry_paddr = guest_page_table.translate(kernel_entry)?;
     let kernel_image = kernel_image(vm_config.kernel.as_str());
     unsafe {
@@ -112,7 +112,6 @@ pub fn init_guest_page_table(
             kernel_entry_paddr.as_usize() as *mut u8,
             kernel_image.len(),
         );
-        core::arch::asm!("fence.i");
     }
 
     // map mmio

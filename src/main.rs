@@ -16,8 +16,8 @@ mod logging;
 mod mem;
 mod pcpu;
 mod sbi;
-mod vm;
 mod trap;
+mod vm;
 
 use crate::config::BOOT_STACK_SIZE;
 use log::{debug, info};

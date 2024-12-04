@@ -123,23 +123,23 @@ fn vmexit_handler(vcpu: &mut VCpu) -> bool {
             // vcpu.guest_cpu_state.sepc += 4;
             return false;
         }
-        // csr::Trap::Interrupt(csr::Interrupt::SupervisorExternal) => {
-        //     debug!(
-        //         "SupervisorExternal: stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
-        //         riscv::register::stval::read(),
-        //         vcpu.guest_cpu_state.sepc,
-        //         csr::htval::read(),
-        //         csr::htinst::read(),
-        //     );
-        //     let mut hvip = csr::Hvip::read();
-        //     hvip.set_vs_external_interrupt(true);
-        //     hvip.write();
-        //     unsafe {
-        //         riscv::register::sie::clear_sext();
-        //     }
-        //     // vcpu.guest_cpu_state.sepc += 4;
-        //     return false;
-        // }
+        csr::Trap::Interrupt(csr::Interrupt::SupervisorExternal) => {
+            debug!(
+                "SupervisorExternal: stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
+                riscv::register::stval::read(),
+                vcpu.guest_cpu_state.sepc,
+                csr::htval::read(),
+                csr::htinst::read(),
+            );
+            let mut hvip = csr::Hvip::read();
+            hvip.set_vs_external_interrupt(true);
+            hvip.write();
+            unsafe {
+                riscv::register::sie::clear_sext();
+            }
+            // vcpu.guest_cpu_state.sepc += 4;
+            return false;
+        }
         _ => {
             panic!(
                 "Unknown trap: {:?}, stval: {:#x}, sepc: {:#x}, htval: {:#x}, htinst: {:#x}",
