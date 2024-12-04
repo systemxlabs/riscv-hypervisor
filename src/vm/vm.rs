@@ -9,7 +9,7 @@ use alloc::vec::Vec;
 use log::debug;
 use spin::{Mutex, Once};
 
-use crate::mem::{align_down, align_up, GuestPageTable, GuestPhysAddr, PTEFlags};
+use crate::mem::{align_down, align_up, GuestPageTable, GuestPhysAddr, HostPhysAddr, PTEFlags};
 use crate::vm::{self, kernel_image, vconfig, VMConfig};
 
 use super::VCpu;
@@ -89,16 +89,17 @@ pub fn init_guest_page_table(
 ) -> HypervisorResult<GuestPageTable> {
     let mut guest_page_table = GuestPageTable::try_new()?;
 
-    let guest_memory_base: GuestPhysAddr = align_down(vm_config.entry, PAGE_SIZE_4K).into();
+    let guest_memory_base = align_down(vm_config.entry, PAGE_SIZE_4K);
     let guest_memory_size = align_up(vm_config.memory_limit, PAGE_SIZE_4K);
-    let paddr = PHYS_FRAME_ALLOCATOR
+    let guest_memory_pages = guest_memory_size / PAGE_SIZE_4K;
+    PHYS_FRAME_ALLOCATOR
         .lock()
-        .alloc_frames(guest_memory_size / PAGE_SIZE_4K, PAGE_SIZE_4K)?;
+        .alloc_range(guest_memory_base.into(), guest_memory_pages);
     let pte_flags = PTEFlags::R | PTEFlags::W | PTEFlags::X | PTEFlags::V | PTEFlags::U;
     guest_page_table.map_region(
-        guest_memory_base,
-        paddr,
-        guest_memory_size / PAGE_SIZE_4K,
+        guest_memory_base.into(),
+        guest_memory_base.into(),
+        guest_memory_pages,
         pte_flags,
     )?;
 
@@ -125,29 +126,32 @@ pub fn init_guest_page_table(
         )?;
     }
 
+    let guest_memory_base_paddr: HostPhysAddr = guest_memory_base.into();
     assert_eq!(
-        guest_page_table.query_page(guest_memory_base).unwrap(),
-        (paddr, pte_flags)
+        guest_page_table
+            .query_page(guest_memory_base.into())
+            .unwrap(),
+        (guest_memory_base_paddr, pte_flags)
     );
     if guest_memory_size > PAGE_SIZE_4K {
         assert_eq!(
             guest_page_table
                 .query_page((guest_memory_base + PAGE_SIZE_4K).into())
                 .unwrap(),
-            (paddr + PAGE_SIZE_4K, pte_flags)
+            (guest_memory_base_paddr + PAGE_SIZE_4K, pte_flags)
         );
     }
     assert_eq!(
         guest_page_table
             .translate((guest_memory_base + 1).into())
             .unwrap(),
-        paddr + 1
+        guest_memory_base_paddr + 1
     );
     assert_eq!(
         guest_page_table
             .translate((guest_memory_base + guest_memory_size - 1).into())
             .unwrap(),
-        paddr + guest_memory_size - 1
+        guest_memory_base_paddr + guest_memory_size - 1
     );
 
     Ok(guest_page_table)

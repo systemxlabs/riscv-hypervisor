@@ -4,6 +4,6 @@
         "kernel": "rCore-Tutorial-v3",
         "memory_limit": "1G",
         "num_vcpu": 1,
-        "entry": "0x80200000"
+        "entry": "0xc0200000"
     }
 ]
