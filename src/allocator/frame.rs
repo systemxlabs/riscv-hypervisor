@@ -1,7 +1,8 @@
 use bitmap_allocator::BitAlloc;
 
 use crate::{
-    config::{PAGE_SIZE_4K, PHYS_MEMORY_END},
+    config::PAGE_SIZE_4K,
+    dtb::MachineMeta,
     error::{HypervisorError, HypervisorResult},
     mem::addr::{align_down, align_up, HostPhysAddr},
 };
@@ -9,12 +10,13 @@ use spin::Mutex;
 
 pub static PHYS_FRAME_ALLOCATOR: Mutex<PhysFrameAllocator> = Mutex::new(PhysFrameAllocator::new());
 
-pub fn init_frame_allocator() {
+pub fn init_frame_allocator(meta: &MachineMeta) {
     extern "C" {
         fn ehypervisor();
     }
     let start = ehypervisor as usize;
-    let size = PHYS_MEMORY_END - start;
+    let phys_mem_end = meta.phys_memory_offset + meta.phys_memory_size;
+    let size = phys_mem_end - start;
     PHYS_FRAME_ALLOCATOR.lock().init(start.into(), size);
 }
 

@@ -57,7 +57,7 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     let machine_meta = dtb::MachineMeta::parse(dtb);
     info!("[HyperVisor] machine meta: {:#x?}", machine_meta);
 
-    allocator::init_frame_allocator();
+    allocator::init_frame_allocator(&machine_meta);
     allocator::init_heap_allocator();
 
     mem::init_hypervisor_page_table(&machine_meta);
