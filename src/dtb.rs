@@ -10,14 +10,15 @@ pub struct Device {
 
 #[derive(Clone, Debug)]
 pub struct Hart {
-    pub hartid: u64,
-    pub plic_context: u64,
+    pub hartid: usize,
+    pub plic_context: usize,
 }
 
 #[derive(Debug, Clone, Default)]
 pub struct MachineMeta {
-    pub phys_memory_offset: usize,
-    pub phys_memory_size: usize,
+    pub phys_mem_start: usize,
+    pub phys_mem_size: usize,
+    // pub harts: ArrayVec<Hart, 16>,
     pub virtio: ArrayVec<Device, 16>,
 }
 
@@ -27,9 +28,16 @@ impl MachineMeta {
         info!("ftd: {:?}", fdt);
         let mut meta = MachineMeta::default();
         for region in fdt.memory().regions() {
-            meta.phys_memory_offset = region.starting_address as usize;
-            meta.phys_memory_size = region.size.unwrap();
+            meta.phys_mem_start = region.starting_address as usize;
+            meta.phys_mem_size = region.size.unwrap();
         }
+        // for cpu in fdt.cpus() {
+        //     meta.harts.push(Hart {
+        //         hartid: cpu.ids().first(),
+        //         // TODO: get plic context
+        //         plic_context: 0,
+        //     });
+        // }
         for node in fdt.find_all_nodes("/soc/virtio_mmio") {
             if let Some(reg) = node.reg().and_then(|mut reg| reg.next()) {
                 let paddr = reg.starting_address as usize;

@@ -16,7 +16,7 @@ pub fn init_frame_allocator(meta: &MachineMeta) {
         fn ehypervisor();
     }
     let start = ehypervisor as usize;
-    let phys_mem_end = meta.phys_memory_offset + meta.phys_memory_size;
+    let phys_mem_end = meta.phys_mem_start + meta.phys_mem_size;
     let size = phys_mem_end - start;
     PHYS_FRAME_ALLOCATOR.lock().init(start.into(), size);
 }

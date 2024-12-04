@@ -151,7 +151,7 @@ pub fn map_free_memory(meta: &MachineMeta) {
         fn ehypervisor();
     }
     let free_mem_start = align_up(ehypervisor as usize, PAGE_SIZE_4K);
-    let phys_mem_end = meta.phys_memory_offset + meta.phys_memory_size;
+    let phys_mem_end = meta.phys_mem_start + meta.phys_mem_size;
     let free_mem_end = align_down(phys_mem_end, PAGE_SIZE_4K);
     assert_eq!(free_mem_start % PAGE_SIZE_4K, 0);
     assert_eq!(free_mem_end % PAGE_SIZE_4K, 0);
