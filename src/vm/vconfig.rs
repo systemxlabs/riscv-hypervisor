@@ -1,11 +1,11 @@
-use alloc::{string::String, vec::Vec};
+use alloc::vec::Vec;
 use log::{debug, info};
 use serde_derive::Deserialize;
 
 #[derive(Debug, Clone)]
 pub struct VMConfig {
-    pub name: String,
-    pub kernel: String,
+    pub name: &'static str,
+    pub kernel: &'static str,
     pub memory_limit: usize,
     pub num_vcpu: usize,
     pub entry: usize,
@@ -13,11 +13,11 @@ pub struct VMConfig {
 
 #[derive(Debug, Clone, Deserialize)]
 pub struct VMJsonConfig {
-    pub name: String,
-    pub kernel: String,
-    pub memory_limit: String,
+    pub name: &'static str,
+    pub kernel: &'static str,
+    pub memory_limit: &'static str,
     pub num_vcpu: usize,
-    pub entry: String,
+    pub entry: &'static str,
 }
 
 pub fn vm_configs() -> Vec<VMConfig> {

@@ -69,7 +69,7 @@ pub struct VM {
 
 impl VM {
     pub fn new(vm_config: VMConfig, meta: &MachineMeta) -> HypervisorResult<Self> {
-        let kernel_image = kernel_image(vm_config.kernel.as_str());
+        let kernel_image = kernel_image(vm_config.kernel);
         let guest_page_table = init_guest_page_table(&vm_config, meta)?;
         let mut vcpus = Vec::new();
         for _ in 0..vm_config.num_vcpu {
@@ -109,7 +109,7 @@ pub fn init_guest_page_table(
     // copy kernel image to guest memory
     let kernel_entry: GuestPhysAddr = vm_config.entry.into();
     let kernel_entry_paddr = guest_page_table.translate(kernel_entry)?;
-    let kernel_image = kernel_image(vm_config.kernel.as_str());
+    let kernel_image = kernel_image(vm_config.kernel);
     unsafe {
         core::ptr::copy_nonoverlapping(
             kernel_image.as_ptr(),
