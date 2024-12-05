@@ -7,6 +7,7 @@ use crate::{
     allocator::PHYS_FRAME_ALLOCATOR,
     config::{PAGE_SIZE_4K, PCPU_STACK_SIZE},
     csr,
+    dtb::MachineMeta,
     error::HypervisorResult,
     mem::{HostPhysAddr, HostVirtAddr},
     sbi,
@@ -154,10 +155,9 @@ fn vmexit_handler(vcpu: &mut VCpu) -> bool {
     true
 }
 
-pub fn init_pcpus(boot_hart_id: usize) {
+pub fn init_pcpus(boot_hart_id: usize, meta: &MachineMeta) {
     assert_eq!(boot_hart_id, 0);
-    // TODO: get cpu info by device tree
-    let cpu_nums: usize = 1;
+    let cpu_nums: usize = meta.harts.len();
     let mut pcpus = Vec::new();
     for cpu_id in 0..cpu_nums {
         let stack_top = PHYS_FRAME_ALLOCATOR

@@ -7,10 +7,10 @@
         "entry": "0xc0200000"
     },
     {
-        "name": "rcore-guest1",
-        "kernel": "rCore-Tutorial-v3-ch1",
+        "name": "rcore-guest7",
+        "kernel": "rCore-Tutorial-v3-ch7",
         "memory_limit": "1G",
         "num_vcpu": 1,
-        "entry": "0x80200000"
+        "entry": "0xc0200000"
     }
 ]

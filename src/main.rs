@@ -66,7 +66,7 @@ pub fn hmain(hart_id: usize, dtb: usize) -> ! {
     mem::enable_mmu();
     allocator::heap_test();
 
-    pcpu::init_pcpus(hart_id);
+    pcpu::init_pcpus(hart_id, &machine_meta);
 
     vm::init_vms(&machine_meta);
     vm::bind_vcpus();

@@ -18,7 +18,7 @@ pub struct Hart {
 pub struct MachineMeta {
     pub phys_mem_start: usize,
     pub phys_mem_size: usize,
-    // pub harts: ArrayVec<Hart, 16>,
+    pub harts: ArrayVec<Hart, 16>,
     pub virtio: ArrayVec<Device, 16>,
 }
 
@@ -31,13 +31,13 @@ impl MachineMeta {
             meta.phys_mem_start = region.starting_address as usize;
             meta.phys_mem_size = region.size.unwrap();
         }
-        // for cpu in fdt.cpus() {
-        //     meta.harts.push(Hart {
-        //         hartid: cpu.ids().first(),
-        //         // TODO: get plic context
-        //         plic_context: 0,
-        //     });
-        // }
+        for cpu in fdt.cpus() {
+            meta.harts.push(Hart {
+                hartid: cpu.ids().first(),
+                // TODO: get plic context
+                plic_context: 0,
+            });
+        }
         for node in fdt.find_all_nodes("/soc/virtio_mmio") {
             if let Some(reg) = node.reg().and_then(|mut reg| reg.next()) {
                 let paddr = reg.starting_address as usize;

@@ -15,9 +15,10 @@ elf:
 $(HYPERVISOR_BIN): elf
 	@$(OBJCOPY) $(HYPERVISOR_ELF) --strip-all -O binary $@
 
-QEMU_ARGS := -d int,guest_errors \
+QEMU_ARGS := -d in_asm,int,mmu,pcall,cpu_reset,guest_errors \
 	        -D /tmp/qemu.log \
 			-machine virt \
+			-smp 1 \
 			-m 4G \
 			-nographic \
 			-bios $(BOOTLOADER) \

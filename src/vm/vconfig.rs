@@ -86,6 +86,10 @@ static GUEST_RCORE_TUTORIAL_V3_CH6_BIN: [u8; include_bytes!(
     "../../guests/rCore-Tutorial-v3/os-ch6.bin"
 )
 .len()] = *include_bytes!("../../guests/rCore-Tutorial-v3/os-ch6.bin");
+static GUEST_RCORE_TUTORIAL_V3_CH7_BIN: [u8; include_bytes!(
+    "../../guests/rCore-Tutorial-v3/os-ch7.bin"
+)
+.len()] = *include_bytes!("../../guests/rCore-Tutorial-v3/os-ch7.bin");
 
 pub fn kernel_image(kernel: &str) -> &'static [u8] {
     if kernel.eq_ignore_ascii_case("hello-world") {
@@ -108,6 +112,9 @@ pub fn kernel_image(kernel: &str) -> &'static [u8] {
     }
     if kernel.eq_ignore_ascii_case("rCore-Tutorial-v3-ch6") {
         return GUEST_RCORE_TUTORIAL_V3_CH6_BIN.as_ref();
+    }
+    if kernel.eq_ignore_ascii_case("rCore-Tutorial-v3-ch7") {
+        return GUEST_RCORE_TUTORIAL_V3_CH7_BIN.as_ref();
     }
     panic!("Unsupported kernel: {}", kernel)
 }
